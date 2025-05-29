@@ -1,0 +1,48 @@
+.global _start
+
+@ Función incial
+_start:
+
+@ Guarda los datos de 32 bits en R5 y R6
+@ v0 y v1 están en memoria
+LOAD R5, pos1, pos2 @ Guardar v0 en un registro
+LOAD R6, pos3, pos4 @ Guardar v1 en un registro
+
+@ Variable para sumar Delta (inicia en 0)
+ADD R7, #0, #0
+
+# Variable para el for (son 32 iteraciones)
+ADD R8, #32, #0
+
+@ Función que hace de for
+_encriptar:
+
+@ Sumar Delta
+DLT R7
+
+@ Para v0
+ADD R9, R6, R7 @ (v1 + sum)
+SAXS R10, R6, pos @ con pos le indico la dirección o lo necesario para que reconozca el key [0] y el key[1]
+XOR R11, R10, R9
+
+ADD R5, R5, R11 @ Nuevo valor de v0
+
+@ Para v1
+ADD R12, R5, R7
+SAXS R13, R5, pos @ con pos le indico la dirección o lo necesario para que reconozca el key [2] y el key[3]
+XOR R14, R13, R12
+
+ADD R6, R6, R14 @ Nuevo valor de v0
+
+@ Verificar si el for ya acabó
+SUB R8, R8, #1 @ Cuando acabe una vuelta, restar 1
+loop R8, _nVals @ Si R8 = 0, pasar a nVals
+
+@ Función para asignar nuevos valores
+_nVals:
+@ Guardar los nuevos datos en memoria
+STOR R5, pos1, pos2 @ Guardar v0 en memoria
+STOR R6, pos3, pos4 @ Guardar v1 en memoria
+
+_end:
+@ Se cierra el programa
