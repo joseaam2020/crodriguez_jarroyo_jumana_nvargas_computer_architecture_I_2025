@@ -156,7 +156,7 @@ class SimpleTextEditor(QMainWindow):
         self.register_table.horizontalHeader().setStretchLastSection(True)
         self.register_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         for i in range(4):
-            name_item = QTableWidgetItem(f"Key 1{i}")
+            name_item = QTableWidgetItem(f"Key {i}")
             name_item.setFlags(Qt.ItemIsEnabled)
             value_item = QTableWidgetItem("0")
             self.register_table.setItem(i, 0, name_item)
@@ -172,7 +172,7 @@ class SimpleTextEditor(QMainWindow):
         right_layout = QVBoxLayout()
         right_panel.setLayout(right_layout)
 
-        memory_label = QLabel("Memoria")
+        memory_label = QLabel("Memory")
         self.memory_table = QTableWidget(10, 2)
         self.memory_table.setHorizontalHeaderLabels(["Address", "Value"])
         self.memory_table.horizontalHeader().setStretchLastSection(True)
