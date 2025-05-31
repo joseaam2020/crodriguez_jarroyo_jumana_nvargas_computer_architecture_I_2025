@@ -1,0 +1,46 @@
+// Cargar valor de v
+LOAD R10, memv, #0 // R10 = v0
+LOAD R11, memv, #4 // R11 = v1
+
+// Cargar Delta
+DLT R5
+
+// valor de sum
+MUL R15, R5, #32 R15 = sum
+
+// contador del loop, inicializarlo en 0
+ADD R7, R7, #32 R7 = i
+
+// Loop de desencriptado
+_desencriptar:
+
+// calcular v1
+SAXS R8, R10, keyH // keyH refiriendose a las partes 2 y 3 de la llave
+ADD  R6, R10, R15 // v0 + sum
+XOR  R12, R8, R6 // xor de lo que faltaba
+SUB  R11, R11, R12 // actualizar v1
+
+// calcular v0
+SAXS R8, R11, keyL // keyL refiriendose a las partes 0 y 1 de la llave
+ADD  R6, R11, R15 // v1 + sum
+XOR  R12, R8, R6 // xor de lo que faltaba
+SUB  R10, R10, R12 // actualizar v0
+
+// restarle delta a sum
+SUB R15, R15, R5
+
+// reducir contador
+SUB R7, R7, #1
+
+// si contador es 0, salir
+LOOP R7, _end
+
+// R0 siempre es 0, entonces continua
+LOOP R0, _desencriptar
+
+_end:
+
+// guardar valores de v en memoria
+STOR R10, memv, #0
+STOR R11, memv, #4
+
