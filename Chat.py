@@ -445,6 +445,46 @@ class SuperescalarArch(Architecture):
             return 'specialized'  # SAXS usa la unidad especializada
         else:
             return 'alu'
+        
+class SuperescalarMarcadorArch(Architecture):
+    """Arquitectura Superescalar basada en algoritmo Marcador"""
+    
+    def __init__(self):
+        super().__init__("Superescalar-Marcador")
+        self.issue_width = 2  # instrucciones por ciclo
+        self.clock_period = 6  # ns
+
+    def analyze(self, tea_code: TEACode) -> Dict:
+        self.total_instructions = len(tea_code.instructions)
+        
+        # Simulación básica: emite hasta 2 instrucciones por ciclo, sin reordenamiento ni ejecución especulativa
+        instructions = tea_code.instructions
+        cycles = 0
+        issued = 0
+        
+        while issued < len(instructions):
+            issue_count = 0
+            while issue_count < self.issue_width and issued < len(instructions):
+                # Supone que todas las instrucciones están listas para emitirse (no se evalúa dependencias)
+                issue_count += 1
+                issued += 1
+            cycles += 1  # un ciclo por grupo de emisión
+        
+        self.total_cycles = cycles
+        execution_time = self.total_cycles * self.clock_period
+
+        return {
+            'architecture': self.name,
+            'total_cycles': self.total_cycles,
+            'total_instructions': self.total_instructions,
+            'clock_period_ns': self.clock_period,
+            'execution_time_ns': execution_time,
+            'frequency_mhz': 1000 / self.clock_period,
+            'ipc': self.total_instructions / self.total_cycles,
+            'throughput_mips': (self.total_instructions / execution_time) * 1000,
+            'issue_width': self.issue_width
+        }
+
 
 class MulticicloArch(Architecture):
     """Arquitectura Multiciclo - diferentes instrucciones toman diferentes ciclos"""
@@ -494,7 +534,8 @@ class TEAAnalyzer:
             UnicicloArch(),
             PipelineArch(),
             VLIWArch(),
-            SuperescalarArch()
+            SuperescalarArch(),
+            SuperescalarMarcadorArch()
         ]
         self.tea_code = TEACode()
         self.results = []

@@ -1,6 +1,6 @@
 """
 Analizador de rendimiento del algoritmo TEA (Tiny Encryption Algorithm)
-para múltiples microarquitecturas: Uniciclo, Pipeline, VLIW, Superescalar, Multiciclo
+para múltiples microarquitecturas: Uniciclo, Pipeline, VLIW, Superescalar (Tomasulo), Superescalar (Marcador)
 """
 
 import numpy as np
@@ -288,15 +288,15 @@ class RegisterStatus:
     """Estado de los registros para Tomasulo"""
     qi: str = ""  # Tag de la unidad funcional que producirá el valor
 
-class SuperescalarArch(Architecture):
+class SuperescalarTomasuloArch(Architecture):
     """Arquitectura Superescalar basada en algoritmo de Tomasulo"""
     
     def __init__(self):
-        super().__init__("Superescalar")
+        super().__init__("Superescalar (Tomasulo)")
         self.issue_width = 2  # instrucciones por ciclo
         self.clock_period = 6  # ns
         
-        # Mismas unidades funcionales que VLIW
+        # Unidades funcionales y estaciones de reserva
         self.reservation_stations = {
             'alu1': ReservationStation('alu1'),
             'alu2': ReservationStation('alu2'),
@@ -338,14 +338,14 @@ class SuperescalarArch(Architecture):
             'ipc': self.total_instructions / self.total_cycles,
             'throughput_mips': (self.total_instructions / execution_time) * 1000,
             'issue_width': self.issue_width,
-            'reservation_stations': len(self.reservation_stations)
+            'reservation_stations': len(self.reservation_stations),
+            'algorithm': 'Tomasulo'
         }
     
     def _simulate_tomasulo(self, instructions: List[Instruction]) -> int:
         """Simula la ejecución usando el algoritmo de Tomasulo"""
         cycle = 0
         instruction_queue = instructions.copy()
-        issued_instructions = []
         completed_instructions = 0
         
         while completed_instructions < len(instructions):
@@ -446,6 +446,226 @@ class SuperescalarArch(Architecture):
         else:
             return 'alu'
 
+@dataclass
+class FunctionalUnit:
+    """Unidad funcional para el algoritmo Marcador"""
+    name: str
+    type: str
+    busy: bool = False
+    op: str = ""
+    fi: str = ""  # Registro destino
+    fj: str = ""  # Registro fuente 1
+    fk: str = ""  # Registro fuente 2
+    qj: str = ""  # Unidad que produce fj
+    qk: str = ""  # Unidad que produce fk
+    rj: bool = False  # fj está listo
+    rk: bool = False  # fk está listo
+    cycles_remaining: int = 0
+
+@dataclass
+class RegisterResult:
+    """Estado de resultados de registros para Marcador"""
+    fu: str = ""  # Unidad funcional que escribirá el registro
+
+class SuperescalarScoreboardArch(Architecture):
+    """Arquitectura Superescalar basada en algoritmo de Marcador (Scoreboard)"""
+    
+    def __init__(self):
+        super().__init__("Superescalar (Marcador)")
+        self.issue_width = 2  # instrucciones por ciclo
+        self.clock_period = 6  # ns
+        
+        # Unidades funcionales
+        self.functional_units = {
+            'alu1': FunctionalUnit('alu1', 'alu'),
+            'alu2': FunctionalUnit('alu2', 'alu'),
+            'memory1': FunctionalUnit('memory1', 'memory'),
+            'memory2': FunctionalUnit('memory2', 'memory'),
+            'branch': FunctionalUnit('branch', 'branch'),
+            'multiplier': FunctionalUnit('multiplier', 'mult'),
+            'specialized': FunctionalUnit('specialized', 'specialized')
+        }
+        
+        # Latencias de ejecución
+        self.execution_latencies = {
+            'alu1': 1, 'alu2': 1,
+            'memory1': 3, 'memory2': 3,
+            'branch': 1,
+            'multiplier': 4,
+            'specialized': 2
+        }
+        
+        # Estado de registros
+        self.register_result = {f'R{i}': RegisterResult() for i in range(16)}
+        
+    def analyze(self, tea_code: TEACode) -> Dict:
+        self.total_instructions = len(tea_code.instructions)
+        
+        # Simular ejecución con Marcador
+        cycles_needed = self._simulate_scoreboard(tea_code.instructions)
+        self.total_cycles = cycles_needed
+        
+        execution_time = self.total_cycles * self.clock_period
+        
+        return {
+            'architecture': self.name,
+            'total_cycles': self.total_cycles,
+            'total_instructions': self.total_instructions,
+            'clock_period_ns': self.clock_period,
+            'execution_time_ns': execution_time,
+            'frequency_mhz': 1000 / self.clock_period,
+            'ipc': self.total_instructions / self.total_cycles,
+            'throughput_mips': (self.total_instructions / execution_time) * 1000,
+            'issue_width': self.issue_width,
+            'functional_units': len(self.functional_units),
+            'algorithm': 'Scoreboard'
+        }
+    
+    def _simulate_scoreboard(self, instructions: List[Instruction]) -> int:
+        """Simula la ejecución usando el algoritmo de Marcador"""
+        cycle = 0
+        instruction_queue = instructions.copy()
+        completed_instructions = 0
+        
+        while completed_instructions < len(instructions):
+            cycle += 1
+            
+            # 1. Write Result - escribir resultados listos
+            completed_this_cycle = self._write_result_phase()
+            completed_instructions += completed_this_cycle
+            
+            # 2. Execute - ejecutar instrucciones listas
+            self._execute_phase()
+            
+            # 3. Read Operands - leer operandos cuando estén disponibles
+            self._read_operands_phase()
+            
+            # 4. Issue - emitir nuevas instrucciones
+            if instruction_queue:
+                self._issue_phase_scoreboard(instruction_queue)
+        
+        return cycle
+    
+    def _issue_phase_scoreboard(self, instruction_queue: List[Instruction]):
+        """Fase de emisión para Marcador"""
+        issued_count = 0
+        
+        while issued_count < self.issue_width and instruction_queue:
+            inst = instruction_queue[0]
+            required_unit_type = self._get_required_unit_type(inst)
+            
+            # Buscar unidad funcional disponible
+            available_unit = self._find_available_unit_scoreboard(required_unit_type)
+            
+            if available_unit and self._check_waw_hazard(inst):
+                # Emitir instrucción
+                self._issue_instruction_scoreboard(inst, available_unit)
+                instruction_queue.pop(0)
+                issued_count += 1
+            else:
+                # No se puede emitir por conflictos o falta de recursos
+                break
+    
+    def _read_operands_phase(self):
+        """Fase de lectura de operandos"""
+        for fu in self.functional_units.values():
+            if fu.busy and not fu.rj and not fu.rk:
+                # Verificar si los operandos están disponibles
+                if fu.qj == "" or not self.functional_units[fu.qj].busy:
+                    fu.rj = True
+                if fu.qk == "" or not self.functional_units[fu.qk].busy:
+                    fu.rk = True
+    
+    def _execute_phase(self):
+        """Fase de ejecución para Marcador"""
+        for fu in self.functional_units.values():
+            if fu.busy and fu.rj and fu.rk and fu.cycles_remaining > 0:
+                fu.cycles_remaining -= 1
+    
+    def _write_result_phase(self) -> int:
+        """Fase de escritura de resultados"""
+        completed = 0
+        
+        for fu in self.functional_units.values():
+            if fu.busy and fu.cycles_remaining == 0 and fu.rj and fu.rk:
+                # Verificar hazards WAR
+                if self._check_war_hazard(fu):
+                    # Liberar unidad funcional
+                    self._release_functional_unit(fu)
+                    completed += 1
+        
+        return completed
+    
+    def _check_waw_hazard(self, inst: Instruction) -> bool:
+        """Verifica hazards Write-After-Write"""
+        if len(inst.operands) > 0 and inst.operands[0].startswith('R'):
+            dest_reg = inst.operands[0]
+            return self.register_result[dest_reg].fu == ""
+        return True
+    
+    def _check_war_hazard(self, fu: FunctionalUnit) -> bool:
+        """Verifica hazards Write-After-Read"""
+        # Simplificación: asumir que no hay conflictos WAR críticos
+        return True
+    
+    def _issue_instruction_scoreboard(self, inst: Instruction, unit_name: str):
+        """Emite una instrucción usando Marcador"""
+        fu = self.functional_units[unit_name]
+        fu.busy = True
+        fu.op = inst.type.value
+        fu.cycles_remaining = self.execution_latencies[unit_name]
+        
+        # Configurar registros
+        if len(inst.operands) > 0 and inst.operands[0].startswith('R'):
+            fu.fi = inst.operands[0]
+            self.register_result[fu.fi].fu = unit_name
+        
+        # Configurar dependencias (simplificado)
+        fu.rj = True  # Asumir operandos disponibles inicialmente
+        fu.rk = True
+    
+    def _find_available_unit_scoreboard(self, unit_type: str) -> str:
+        """Encuentra una unidad funcional disponible"""
+        for unit_name, fu in self.functional_units.items():
+            if not fu.busy:
+                if ((unit_type == 'alu' and unit_name.startswith('alu')) or
+                    (unit_type == 'memory' and unit_name.startswith('memory')) or
+                    (unit_type == 'branch' and unit_name == 'branch') or
+                    (unit_type == 'mult' and unit_name == 'multiplier') or
+                    (unit_type == 'specialized' and unit_name == 'specialized')):
+                    return unit_name
+        return None
+    
+    def _release_functional_unit(self, fu: FunctionalUnit):
+        """Libera una unidad funcional"""
+        if fu.fi:
+            self.register_result[fu.fi].fu = ""
+        
+        fu.busy = False
+        fu.op = ""
+        fu.fi = ""
+        fu.fj = ""
+        fu.fk = ""
+        fu.qj = ""
+        fu.qk = ""
+        fu.rj = False
+        fu.rk = False
+        fu.cycles_remaining = 0
+    
+    def _get_required_unit_type(self, inst: Instruction) -> str:
+        """Determina qué tipo de unidad funcional requiere la instrucción"""
+        if inst.memory_access:
+            return 'memory'
+        elif inst.branch:
+            return 'branch'
+        elif inst.type == InstructionType.MUL:
+            return 'mult'
+        elif inst.type == InstructionType.SAXS:
+            return 'specialized'
+        else:
+            return 'alu'
+        
+
 class MulticicloArch(Architecture):
     """Arquitectura Multiciclo - diferentes instrucciones toman diferentes ciclos"""
     
@@ -494,7 +714,9 @@ class TEAAnalyzer:
             UnicicloArch(),
             PipelineArch(),
             VLIWArch(),
-            SuperescalarArch()
+            SuperescalarScoreboardArch(),
+            SuperescalarTomasuloArch()
+
         ]
         self.tea_code = TEACode()
         self.results = []
