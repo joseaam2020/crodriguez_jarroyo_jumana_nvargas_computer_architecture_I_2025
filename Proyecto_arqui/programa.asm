@@ -1,2 +1,2 @@
 STOR R1, R2, R3
-SAXS R5, R6, 9
+LOOP R5, end
