@@ -1,4 +1,4 @@
-class InstructionMemory:
+class InstMem:
     def __init__(self):
         self.memory = []
 
