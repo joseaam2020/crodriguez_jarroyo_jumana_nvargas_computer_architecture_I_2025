@@ -1,4 +1,11 @@
 #from procesador import ALU,DM,InstMem,RegisterFile
+from ALU import ALU
+from RegisterFile import RegisterFile
+from DM import DM
+from InstMem import InstMem
+from Safe import Safe
+from SAXS import SAXS
+from MemoriaCentral import CentralMemory
 
 class Pipeline_marcador:
     def __init__(self):
@@ -6,10 +13,10 @@ class Pipeline_marcador:
         self.alu = ALU()
         self.dm = DM()
         self.im = InstMem()
-        self.safe = SAFE()
-        self.saks = SAKS()
-        self.marcador = Marcador()
-        self.memoria = Memoria()
+        self.safe = Safe()
+        self.saks = SAXS()
+        #self.marcador = Marcador()
+        self.memoria = CentralMemory()
 
     def tick(self):
         instruccion = self.im # nombre de la funcion para llamarlo
