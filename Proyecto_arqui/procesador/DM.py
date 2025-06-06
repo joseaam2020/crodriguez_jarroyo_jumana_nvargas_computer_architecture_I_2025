@@ -1,5 +1,5 @@
 #Clase del DataMemory
-class DataMemory:
+class DM:
     def __init__(self, size=1024):
         self.memory = [0] * size
         self.size = size

@@ -1,4 +1,4 @@
-class InstructionMemory:
+class InstMem:
     def __init__(self):
         self.memory = []
 
@@ -10,7 +10,7 @@ class InstructionMemory:
         if index < 0 or index >= len(self.memory):
             raise IndexError("No existen mas instrucciones")
         return self.memory[index]
-    
+
 # Crear instancia
 imem = InstructionMemory()
 
@@ -25,7 +25,7 @@ imem.load_instructions(instrucciones)
 
 pc = 0
 inst = imem.fetch(pc)
-print(f"Instrucción en dirección {pc}: {inst}")
+#print(f"Instrucción en dirección {pc}: {inst}")
 pc = 12
 inst = imem.fetch(pc)
-print(f"Instrucción en dirección {pc}: {inst}")
+#print(f"Instrucción en dirección {pc}: {inst}")
