@@ -181,6 +181,7 @@ class VLIWArch(Architecture):
             'memory2': {'type': 'memory', 'available': True},  # Load/Store duplicada
             'branch': {'type': 'branch', 'available': True},
             'multiplier': {'type': 'mult', 'available': True},
+            'divider': {'type': 'div', 'available': True},
             'specialized': {'type': 'specialized', 'available': True}  # Espacio para FU especializada
         }
         self.max_issue_width = len(self.functional_units)
@@ -230,6 +231,7 @@ class VLIWArch(Architecture):
                 if available_unit:
                     current_packet.append(inst)
                     self.functional_units[available_unit]['available'] = False
+                    #print(f"[Ciclo VLIW] Instrucción {inst.type.value} usa la unidad: {available_unit}")
                     i += 1
                 else:
                     # No hay unidad disponible, pasar al siguiente ciclo
@@ -261,10 +263,10 @@ class VLIWArch(Architecture):
         """Determina qué tipo de unidad funcional requiere la instrucción"""
         if inst.memory_access:
             return 'memory'
-        elif inst.branch:
-            return 'branch'
         elif inst.type == InstructionType.MUL:
             return 'mult'
+        elif inst.type == InstructionType.DIV:
+            return 'div'
         elif inst.type == InstructionType.SAXS:
             return 'specialized'  # SAXS puede usar la unidad especializada
         else:
@@ -304,6 +306,7 @@ class SuperescalarTomasuloArch(Architecture):
             'memory2': ReservationStation('memory2'),
             'branch': ReservationStation('branch'),
             'multiplier': ReservationStation('multiplier'),
+            'divider': ReservationStation('divider'),
             'specialized': ReservationStation('specialized')  # Para SAXS
         }
         
@@ -311,9 +314,10 @@ class SuperescalarTomasuloArch(Architecture):
         self.execution_latencies = {
             'alu1': 1, 'alu2': 1,
             'memory1': 3, 'memory2': 3,
-            'branch': 1,
-            'multiplier': 4,
-            'specialized': 2  # Para SAXS
+            'branch': 1, # No importa ya que no se usa
+            'multiplier': 1,
+            'divider': 40,
+            'specialized': 4  # Para SAXS
         }
         
         # Estado de registros (simplificado con algunos registros clave)
@@ -429,6 +433,7 @@ class SuperescalarTomasuloArch(Architecture):
                     (unit_type == 'memory' and station_name.startswith('memory')) or
                     (unit_type == 'branch' and station_name == 'branch') or
                     (unit_type == 'mult' and station_name == 'multiplier') or
+                    (unit_type == 'div' and station_name == 'divider') or
                     (unit_type == 'specialized' and station_name == 'specialized')):
                     return station_name
         return None
@@ -437,10 +442,10 @@ class SuperescalarTomasuloArch(Architecture):
         """Determina qué tipo de unidad funcional requiere la instrucción"""
         if inst.memory_access:
             return 'memory'
-        elif inst.branch:
-            return 'branch'
         elif inst.type == InstructionType.MUL:
             return 'mult'
+        elif inst.type == InstructionType.DIV:
+            return 'div'
         elif inst.type == InstructionType.SAXS:
             return 'specialized'  # SAXS usa la unidad especializada
         else:
@@ -483,6 +488,7 @@ class SuperescalarScoreboardArch(Architecture):
             'memory2': FunctionalUnit('memory2', 'memory'),
             'branch': FunctionalUnit('branch', 'branch'),
             'multiplier': FunctionalUnit('multiplier', 'mult'),
+            'divider': FunctionalUnit('divider', 'div'),
             'specialized': FunctionalUnit('specialized', 'specialized')
         }
         
@@ -491,8 +497,9 @@ class SuperescalarScoreboardArch(Architecture):
             'alu1': 1, 'alu2': 1,
             'memory1': 3, 'memory2': 3,
             'branch': 1,
-            'multiplier': 4,
-            'specialized': 2
+            'multiplier': 1,
+            'divider': 40,
+            'specialized': 4
         }
         
         # Estado de registros
@@ -632,6 +639,7 @@ class SuperescalarScoreboardArch(Architecture):
                     (unit_type == 'memory' and unit_name.startswith('memory')) or
                     (unit_type == 'branch' and unit_name == 'branch') or
                     (unit_type == 'mult' and unit_name == 'multiplier') or
+                    (unit_type == 'div' and unit_name == 'divider') or 
                     (unit_type == 'specialized' and unit_name == 'specialized')):
                     return unit_name
         return None
@@ -656,10 +664,10 @@ class SuperescalarScoreboardArch(Architecture):
         """Determina qué tipo de unidad funcional requiere la instrucción"""
         if inst.memory_access:
             return 'memory'
-        elif inst.branch:
-            return 'branch'
         elif inst.type == InstructionType.MUL:
             return 'mult'
+        elif inst.type == InstructionType.DIV:
+            return 'div'
         elif inst.type == InstructionType.SAXS:
             return 'specialized'
         else:
