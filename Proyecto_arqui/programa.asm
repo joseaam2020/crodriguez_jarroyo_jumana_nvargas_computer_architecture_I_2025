@@ -1,5 +1,0 @@
-STOR R1, R2, R3
-LOOP R5, end
-ADD R1, R1, R4
-end:
-SUB R2, R2, R1
