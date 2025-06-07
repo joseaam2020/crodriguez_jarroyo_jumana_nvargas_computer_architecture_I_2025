@@ -12,7 +12,7 @@ class InstMem:
         return self.memory[index]
 
 # Crear instancia
-imem = InstructionMemory()
+imem = InstMem()
 
 
 instrucciones = [

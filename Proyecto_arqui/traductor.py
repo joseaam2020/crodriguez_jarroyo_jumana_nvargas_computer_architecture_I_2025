@@ -1,18 +1,42 @@
-#Traductor de Ensamblador a código máquina
-#Ingreso el archivo de ensablador que quiero leer
-
-def leer_asm(programa):
+# ------------------------------------------------------------------------------
+# Paso 1: Leer y extraer etiquetas
+def leer_asm_con_etiquetas(programa):
     with open(programa, 'r') as archivo:
         lineas = archivo.readlines()
-    instrucciones = [linea.strip() for linea in lineas if linea.strip()]
-    return instrucciones
 
-instrucciones = leer_asm("programa.asm")
-print(instrucciones)
+    instrucciones = []
+    etiquetas = {}
+    linea_real = 0
 
-#--------------------------------------------------------------------------------
-#Lista de indentificadores de cada instrucción:
+    for i, linea in enumerate(lineas):
+        linea = linea.strip()
+        if not linea:
+            continue
 
+        if ':' in linea:
+            nombre_etiqueta = linea.replace(':', '').strip()
+            etiquetas[nombre_etiqueta] = linea_real
+        else:
+            instrucciones.append(linea)
+            linea_real += 1
+
+    return instrucciones, etiquetas
+
+# ------------------------------------------------------------------------------
+# Codificación de registros y valores inmediatos
+def reg_a_bin(reg):
+    if not reg.startswith("R"):
+        raise ValueError(f"Registro inválido: {reg}")
+    num = int(reg[1:])
+    if num < 0 or num > 15:
+        raise ValueError(f"Registro fuera de rango: {reg}")
+    return format(num, '04b')
+
+def imm_a_bin(valor, bits):
+    return format(int(valor), f'0{bits}b')
+
+# ------------------------------------------------------------------------------
+# Diccionario de opcodes
 opcodes = {
     'LOOP': '0000',
     'SAXS': '0001',
@@ -30,21 +54,9 @@ opcodes = {
     'STK':  '1101',
     'DLT':  '1110'
 }
-#--------------------------------------------------------------------------------
-#Identificacion de Registros y transformacion de inm en valores bin
 
-def reg_a_bin(reg):
-    if not reg.startswith("R"):
-        raise ValueError(f"Registro inválido: {reg}")
-    num = int(reg[1:])
-    if num < 0 or num > 15:
-        raise ValueError(f"Registro fuera de rango: {reg}")
-    return format(num, '04b')
-
-def imm_a_bin(valor, bits):
-    return format(int(valor), f'0{bits}b')
-#--------------------------------------------------------------------------------
-#Identificacion de tipo de inst (ALU,MEM,Branch)
+# ------------------------------------------------------------------------------
+# Tipo de instrucción
 def tipo_instruccion(nombre):
     if nombre == 'LOOP':
         return 'branch'
@@ -53,10 +65,9 @@ def tipo_instruccion(nombre):
     else:
         return 'aritmetica'
 
-#--------------------------------------------------------------------------------
-#Instrucciones a binario
-
-def traducir_instruccion(instr):
+# ------------------------------------------------------------------------------
+# Traductor con etiquetas
+def traducir_instruccion(instr, etiquetas, pc):
     partes = instr.replace(',', '').split()
     nombre = partes[0]
     tipo = tipo_instruccion(nombre)
@@ -64,7 +75,20 @@ def traducir_instruccion(instr):
 
     if tipo == 'branch':
         reg_cond = reg_a_bin(partes[1])
-        tag = imm_a_bin(partes[2], 13)
+        destino = partes[2]
+
+        # Convertir etiqueta o valor inmediato a 13 bits
+        if destino in etiquetas:
+            offset = etiquetas[destino]  # Dirección absoluta de la etiqueta
+        elif destino.isdigit():
+            offset = int(destino)
+        else:
+            raise ValueError(f"Etiqueta o número inválido: '{destino}' en instrucción '{instr}'")
+
+        if offset < 0 or offset >= 2**13:
+            raise ValueError(f"Offset fuera de rango (0 a 8191): {offset}")
+
+        tag = imm_a_bin(offset, 13)
         return opcode + reg_cond + tag
 
     elif tipo == 'memoria':
@@ -93,22 +117,23 @@ def traducir_instruccion(instr):
             imm = imm_a_bin(src2, 8)
             return opcode + '1' + reg_dest_bin + reg_src1_bin + imm
 
-
-#-------------------------------------------------------------------------------
-#Union de todo
+# ------------------------------------------------------------------------------
+# Ensamblador principal
 def ensamblar(nombre_entrada, nombre_salida):
-    instrucciones = leer_asm(nombre_entrada)
+    instrucciones, etiquetas = leer_asm_con_etiquetas(nombre_entrada)
     binarios = []
 
-    for instr in instrucciones:
-        binario = traducir_instruccion(instr)
+    for pc, instr in enumerate(instrucciones):
+        binario = traducir_instruccion(instr, etiquetas, pc)
         binarios.append(binario)
 
     with open(nombre_salida, 'w') as archivo:
         for linea in binarios:
             archivo.write(linea + '\n')
 
-
+# ------------------------------------------------------------------------------
+# Ejecutar
 ensamblar("programa.asm", "salida.txt")
+
 
 
