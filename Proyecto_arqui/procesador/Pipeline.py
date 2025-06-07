@@ -10,6 +10,13 @@ import procesador.Marcador as Marcador
 from ParserMarcador import ScoreboardParser,Scoreboard 
 
 class Pipeline_marcador (Scoreboard):
+    _instance = None
+    
+    def _new_(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+    
     def __init__(self):
         super()
         self.registros = RegisterFile()

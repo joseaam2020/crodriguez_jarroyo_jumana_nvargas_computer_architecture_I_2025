@@ -20,9 +20,6 @@ class CentralMemory:
     def write_data(self, address, data, mem_write=False):
         self.data_mem.write(address, data, mem_write)
 
-    def store_key(self, key_index, r1, r2, r3, r4, stk_op=False):
-        self.data_mem.store_key(key_index, r1, r2, r3, r4, stk_op)
-
     def apply_delta(self, value, dlt_op=False):
         return self.data_mem.add_delta(value, dlt_op)
 
