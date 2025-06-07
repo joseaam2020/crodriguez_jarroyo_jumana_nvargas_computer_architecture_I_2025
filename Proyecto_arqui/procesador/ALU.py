@@ -28,6 +28,7 @@ class ALU(FunctionalUnit):
             elif opcode == "LOOP":
                 if val1 == 0:
                     self.zero_flag = True
+                    return val2
                 else:
                     self.zero_flag = False            
             else:
