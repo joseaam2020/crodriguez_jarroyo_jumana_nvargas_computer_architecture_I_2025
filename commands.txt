@@ -1,0 +1,4 @@
+python -m venv env
+env/Scripts/activate.ps1 (para powershell)
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass (Para error de ejecucion)
+pip install pyside6
