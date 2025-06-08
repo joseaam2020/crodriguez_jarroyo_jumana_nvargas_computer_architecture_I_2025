@@ -1,11 +1,12 @@
 import os
 from Instruccion import instructions as inst_funcs
+from fu import FunctionalUnit, FORMAT_HEADER
 
 
 class ScoreboardParser:
-    def __init__(self, bin_file):
+    def __init__(self, bin_file,sb=None):
         self.asm = bin_file
-        self.sb = Scoreboard()
+        self.sb = sb if sb is not None else Scoreboard()
         self.__init_default_units()
 
     # Inicializa 2 unidades por tipo
@@ -27,9 +28,9 @@ class ScoreboardParser:
 
     # Lee el archivo binario y lo parsea
     @staticmethod
-    def scoreboard_for_asm(bin_file):
+    def scoreboard_for_asm(bin_file,sb=None):
         full_path = os.path.join(os.path.dirname(__file__), bin_file)
-        parser = ScoreboardParser(full_path)
+        parser =  ScoreboardParser(full_path,sb) if sb is not None else ScoreboardParser(full_path)
         with open(parser.asm, 'r') as f:
             instrucciones_binarias = [line.strip() for line in f if line.strip()]
         for instr_bin in instrucciones_binarias:
@@ -148,19 +149,24 @@ class Scoreboard:
         self.issue(next_instruction, fu)
         self.pc += 1
         fu.lock = True
+        print(f"[{self.clock}] Issued instruction to FU {fu.type}")
       elif self.can_read_operands(fu):
         self.read_operands(fu)
         fu.lock = True
+        print(f"[{self.clock}] Read operands in FU {fu.type}")
       elif self.can_execute(fu):
         self.execute(fu)
         fu.lock = True
+        print(f"[{self.clock}] Executing in FU {fu.type}")
       elif fu.issued():
         # the functional unit is in use but can't do anything
         fu.lock = True
+        print(f"[{self.clock}] Stalled FU {fu.type}, waiting on dependencies")
 
     for fu in self.units:
       if not fu.lock and self.can_write_back(fu):
         self.write_back(fu)
+        print(f"[{self.clock}] Wrote Back instruction to FU {fu.type}")
 
     self.clock += 1
 
@@ -174,9 +180,10 @@ class Scoreboard:
 
 scoreboard = ScoreboardParser.scoreboard_for_asm("salida.txt")
 
+"""
 print(scoreboard.instructions)
 print(scoreboard.instructions[0].op)
 print(scoreboard.instructions[1].op)
 print(scoreboard.instructions[2].op)
 print(scoreboard.instructions[3].op)
-
+"""

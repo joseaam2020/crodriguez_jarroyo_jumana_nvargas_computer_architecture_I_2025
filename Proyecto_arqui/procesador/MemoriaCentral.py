@@ -1,5 +1,5 @@
-from DM import DataMemory
-from InstMem import InstructionMemory
+from DM import DM as DataMemory
+from InstMem import InstMem as InstructionMemory  
 
 class CentralMemory:
     def __init__(self, data_size=1024):

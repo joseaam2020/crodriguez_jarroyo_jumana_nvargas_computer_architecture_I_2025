@@ -3,10 +3,11 @@ from fu import FunctionalUnit
 
 class DIV(FunctionalUnit): 
 
-    def _init_(self):  
-        super._init_("div",40)
+    def __init__(self):  
+        super().__init__("div",40)
 
     def execute(self, opcode: str, val1: int, val2: int):
+        self.clocks -= 1
         try:
             if opcode == "DIV":
                 if val2 == 0:

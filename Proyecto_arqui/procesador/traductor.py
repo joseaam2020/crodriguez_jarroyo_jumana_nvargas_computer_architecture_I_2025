@@ -133,7 +133,7 @@ def ensamblar(nombre_entrada, nombre_salida):
 
 # ------------------------------------------------------------------------------
 # Ejecutar
-ensamblar("programa.asm", "salida.txt")
+ensamblar("Proyecto_arqui/procesador/programa.asm", "Proyecto_arqui/procesador/salida.txt")
 
 
 

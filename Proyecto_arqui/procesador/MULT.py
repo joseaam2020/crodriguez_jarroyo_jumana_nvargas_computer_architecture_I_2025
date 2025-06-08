@@ -3,10 +3,11 @@ from fu import FunctionalUnit
 
 class MULT(FunctionalUnit): 
 
-    def _init_(self):  
-        super._init_("mult",1)
+    def __init__(self):  
+        super().__init__("mult",1)
 
     def execute(self, opcode: str, val1: int, val2: int):
+        self.clocks -= 1
         try:
             if opcode == "MULT":
                 return val1 * val2, ""

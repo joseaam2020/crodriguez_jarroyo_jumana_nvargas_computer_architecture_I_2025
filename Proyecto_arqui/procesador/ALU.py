@@ -4,27 +4,27 @@ from fu import FunctionalUnit
 
 class ALU(FunctionalUnit): 
 
-    def _init_(self, delta):  
-        super._init_("alu",1)
-        self.delta = delta
+    def __init__(self):  
+        super().__init__("alu",1)
         self.zero_flag = False
 
     def execute(self, opcode: str, val1: int, val2: int = 0):
+        self.clocks -= 1
         try:
             if opcode == "ADD":
-                return val1 + val2, ""
+                return val1 + val2
             elif opcode == "SUB":
-                return val1 - val2, ""
+                return val1 - val2
             elif opcode == "AND":
-                return val1 & val2, ""
+                return val1 & val2
             elif opcode == "OR":
-                return val1 | val2, ""
+                return val1 | val2
             elif opcode == "XOR":
-                return val1 ^ val2, ""
+                return val1 ^ val2
             elif opcode == "SHRL":
-                return val1 >> val2, ""
+                return val1 >> val2
             elif opcode == "SHLL":
-                return val1 << val2, ""
+                return val1 << val2
             elif opcode == "LOOP":
                 if val1 == 0:
                     self.zero_flag = True

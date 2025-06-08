@@ -1,15 +1,15 @@
 from fu import FunctionalUnit
-from Pipeline import Pipeline_marcador
 #Clase de SAXS
 
 # Se hace individualmente, primero para v0 y luego para v1
 class SAXS(FunctionalUnit): 
 
-    def _init_(self):  
-        super._init_("saxs",4)
-        self.safe = Pipeline_marcador().safe
+    def __init__(self,safe):  
+        super().__init__("saxs",4)
+        self.safe = safe
 
     def execute(self, opcode: str, v: int, key: int):
+        self.clocks -= 1
         try:
             if opcode == "SAXS":
                 
