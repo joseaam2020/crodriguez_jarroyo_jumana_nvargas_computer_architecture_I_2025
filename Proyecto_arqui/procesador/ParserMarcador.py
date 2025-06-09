@@ -36,6 +36,7 @@ class Scoreboard:
     self.reg_status = {}      # register status table
     self.pc = 0               # program counter
     self.clock = 1            # processor clock
+    self.wait_branch = False
 
 
   def __str__(self):
@@ -69,7 +70,7 @@ class Scoreboard:
     if inst is None:
       return False
     else:
-      return inst.op == fu.type and not fu.busy and not (inst.fi in self.reg_status)
+      return inst.op == fu.type and not fu.busy and not (inst.fi in self.reg_status) and not self.wait_branch
 
 
   """ Determines if an instruction is able to enter the read operands phase"""
@@ -100,6 +101,8 @@ class Scoreboard:
     self.reg_status[inst.fi] = fu
     self.instructions[self.pc].issue = self.clock
     fu.inst_pc = self.pc
+    if inst.opname == "LOOP":
+      self.wait_branch = True
 
 
   """ Read operands stage of the scoreboard"""
@@ -126,6 +129,7 @@ class Scoreboard:
 
   """ Tick: simulates a clock cycle in the scoreboard"""
   def tick(self):
+
     # unlock all functional units
     for fu in self.units:
       fu.lock = False

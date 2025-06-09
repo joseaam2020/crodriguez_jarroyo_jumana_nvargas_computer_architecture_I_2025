@@ -5,8 +5,9 @@ class MULT(FunctionalUnit):
 
     def __init__(self):  
         super().__init__("mult",1)
+        self.zero_flag = False
 
-    def execute(self, opcode: str, val1: int, val2: int):
+    def execute(self, opcode: str, val1: int, val2: int, val3: int = 0):
         self.clocks -= 1
         try:
             if opcode == "MULT":

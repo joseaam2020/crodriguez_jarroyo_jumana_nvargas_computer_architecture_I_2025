@@ -36,7 +36,7 @@ class DM:
                 # Rellenamos con ceros si el bloque es menor a 4 bytes (padding)
                 word = int.from_bytes(word_bytes.ljust(4, b'\x00'), byteorder="little")
                 # Escribimos la palabra en memoria
-                dm.write(start_address + (i // 4), word, mem_write=True)
+                self.write(start_address + (i // 4), word, mem_write=True)
 
 if __name__ == "__main__":
     dm = DM(size=4096)  # Instancia de tu clase de memoria

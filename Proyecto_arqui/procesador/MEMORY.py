@@ -5,17 +5,20 @@ class Memory(FunctionalUnit):
 
     def __init__(self,safe,memory,registros):  
         super().__init__("memory",3)
+        self.zero_flag = False
         self.memory = memory
         self.safe = safe 
         self.regs = registros 
 
-    def execute(self, opcode: str, address: int = 0, val: int = 0):
+    def execute(self, opcode: str, address: int = 0, val: int = 0, val2: int = 0):
         self.clocks -= 1
         try:
             if opcode == "LOAD":
-                return self.memory.read_data(address, False)
+                addr = address + val
+                return self.memory.read_data(address, True)
             elif opcode == "STOR":
-                self.memory.write_data(address, val, False)
+                addr = address + val
+                self.memory.write_data(addr, val2, True)
             elif opcode == "STK":
                 self.safe.store_key(address, self.regs[0], self.regs[1], self.regs[2], self.regs[3])
             elif opcode == "DLT":

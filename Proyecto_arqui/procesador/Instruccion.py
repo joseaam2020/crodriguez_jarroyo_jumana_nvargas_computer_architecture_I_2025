@@ -49,12 +49,12 @@ opcode_names = {
 
 
 def __branch(inst):
-    op = 'branch'
+    op = 'alu'
     opcode = inst[:4]
     opname = opcode_names.get(opcode, 'UNKNOWN')
-    fi = inst[8:21]
-    fj = inst[4:8]
-    return Instruction(inst, op, fi, fj, None, opname)
+    fj = inst[8:21]
+    fk = inst[4:8]
+    return Instruction(inst, op, "0", fj, fk, opname)
 
 
 def __mult(inst):
@@ -119,10 +119,16 @@ def __specialized(inst):
     op = 'saxs'
     opcode = inst[:4]
     opname = opcode_names.get(opcode, 'UNKNOWN')
-    fi = inst[5:9]
-    fj = inst[9:13]
-    fk = inst[13:17]
-    return Instruction(inst, op, fi, fj, fk, opname)
+    if inst[4] == '0': #Immediate
+        fi = inst[5:9]
+        fj = inst[9:13]
+        fk = inst[13:17]
+        return Instruction(inst, op, fi, fj, fk, opname)
+    else: #Immediate
+        fi = inst[5:9]
+        fj = inst[9:13]
+        imm = int(inst[13:21], 2) 
+        return Instruction(inst, op, fi, fj, None, opname,imm,True)
 
 # Función para decodificar una instrucción binaria
 def decode_instruction(binary_string):
@@ -135,7 +141,7 @@ def decode_instruction(binary_string):
 
 # Diccionario principal de decodificación
 instructions = {
-    '0000': __arithmetic,   # LOOP
+    '0000': __branch,   # LOOP
     '0001': __specialized,  # SAXS
     '0010': __arithmetic,   # ADD
     '0011': __arithmetic,   # SUB

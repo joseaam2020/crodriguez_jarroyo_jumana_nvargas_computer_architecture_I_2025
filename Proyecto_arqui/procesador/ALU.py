@@ -8,7 +8,7 @@ class ALU(FunctionalUnit):
         super().__init__("alu",1)
         self.zero_flag = False
 
-    def execute(self, opcode: str, val1: int, val2: int = 0):
+    def execute(self, opcode: str, val1: int, val2: int = 0, val3: int = 0):
         self.clocks -= 1
         try:
             if opcode == "ADD":
@@ -26,11 +26,11 @@ class ALU(FunctionalUnit):
             elif opcode == "SHLL":
                 return val1 << val2
             elif opcode == "LOOP":
-                if val1 == 0:
+                if val2 == 0:
                     self.zero_flag = True
-                    return val2
+                    return val3
                 else:
-                    self.zero_flag = False            
+                    self.zero_flag = False           
             else:
                 return 0, f"Opcode no soportado: {opcode}"
         except Exception as e:

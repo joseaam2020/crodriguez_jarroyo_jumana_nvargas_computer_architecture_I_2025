@@ -7,13 +7,15 @@ class SAXS(FunctionalUnit):
     def __init__(self,safe):  
         super().__init__("saxs",4)
         self.safe = safe
+        self.zero_flag = False
 
-    def execute(self, opcode: str, v: int, key: int):
+    def execute(self, opcode: str, v: int, key: int, val3: int = 0):
         self.clocks -= 1
         try:
             if opcode == "SAXS":
                 
                 keys = self.safe.load_key(key)
+                
                 k0 = keys[0]
                 k1 = keys[1]
 

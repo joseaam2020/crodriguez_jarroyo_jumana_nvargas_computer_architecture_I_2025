@@ -30,7 +30,7 @@ class RegisterFile:
         for i in range(16):
             print(f"R{i}: {self.regs[i]}")
 
-rf = RegisterFile()
+"""rf = RegisterFile()
 
 rf.set_inputs(rs1=2, rs2=3, rd=5, w_data=123, w_enable=True)
 rf.write()
@@ -42,4 +42,4 @@ rf.read()
 print("Data1 (R2):", rf.data1)
 print("Data2 (R5):", rf.data2)
 
-rf.dump()
+rf.dump()"""

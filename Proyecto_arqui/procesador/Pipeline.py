@@ -24,6 +24,7 @@ class Pipeline_marcador (Scoreboard):
         self.safe = Safe()
         self.memory = CentralMemory()
         self.memory.load_instructions(inst)
+        self.memory.data_mem.load_file("jorge_luis.txt", start_address=0)
         self.scoreboard = ScoreboardParser.parse_from_memory(self.memory.inst_mem.memory, self)
 
         #Unidades funcionales
@@ -47,10 +48,17 @@ class Pipeline_marcador (Scoreboard):
     
     """ Execute stage of the scoreboard"""
     def execute(self, fu):
+        print(f"pc: {fu.inst_pc}")
         inst = self.instructions[fu.inst_pc]
-
+ 
         fj_val = None
         fk_val = None 
+
+        if inst.fi is not None:
+            fi_index = int(fu.fi, 2)
+            fi_val = self.registros.regs[fi_index]
+        else:
+            fi_index = 0
 
         if inst.fj is not None:
             fj_index = int(inst.fj, 2)
@@ -63,16 +71,26 @@ class Pipeline_marcador (Scoreboard):
             print(inst.imm)
             fk_val = inst.imm   
 
-        result = fu.execute(inst.opname, fj_val, fk_val)
-        inst.result = result
+        if (fu.type == "alu" or fu.type == "saxs"):
+            result = fu.execute(inst.opname, fj_val, fk_val, fj_index)
+            inst.result = result
+        elif (fu.type == "memory"):
+            result = fu.execute(inst.opname, fj_val, fk_val, fi_val)
+            inst.result = result
+        else:
+            result = fu.execute(inst.opname, fj_val, fk_val)
+            inst.result = result
+
+        
         print(
             f"Name: {inst.opname}",
             f"Is Imm: {inst.is_imm}",
             f"Imm: {inst.imm}",
             f"Clock: {fu.clocks}",
+            f"fi_reg: {fi_index}",
             f"fj_val: {fj_val}",
             f"fk_val: {fk_val}",
-            f"result: {result}",
+            f"result: {inst.result}",
         )
         
         
@@ -84,9 +102,15 @@ class Pipeline_marcador (Scoreboard):
     def write_back(self, fu): 
         inst = self.instructions[fu.inst_pc]
 
-        if inst.fi and inst.result is not None:
+        if inst.fi and inst.result is not None and fu.zero_flag == False:
             fi_index = int(inst.fi, 2)
             self.registros.regs[fi_index] = inst.result
+        elif (fu.zero_flag == True):
+            self.pc = inst.result
+            print(f"Salto tomado a PC={self.pc}")
+            fu.zero_flag = False
+            self.wait_branch = False
+        
 
         #Write back confirmation 
         fu.write_back(self.units)
@@ -109,4 +133,8 @@ while not sb.done():
 
 for instruction in sb.instructions:
     print(str(instruction))
+
+print(sb.registros.dump())
+print(sb.memory.read_data(0, True))
+print(sb.pc)
 
