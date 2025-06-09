@@ -1,10 +1,8 @@
-ADD  R2, R0, 4
-STOR R3, R0, R0
-LOAD R1, R2, R3
-ADD  R4, R1, 3
-SAXS R1, R2, 5
-LOOP R0, end
-ADD R12, R2, R0
-SUB R12, R12, R0
+ADD R5, R0, 3
+loop:
+SUB R5, R5, 1
+ADD R7, R7, R5
+LOOP R5, end
+LOOP R0, loop
 end:
-ADD R11, R2, R0
+ADD R3, R0, 5

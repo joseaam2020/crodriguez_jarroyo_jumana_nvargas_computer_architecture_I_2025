@@ -110,6 +110,9 @@ class Pipeline_marcador (Scoreboard):
             print(f"Salto tomado a PC={self.pc}")
             fu.zero_flag = False
             self.wait_branch = False
+        else:
+            self.wait_branch = False
+        
         
 
         #Write back confirmation 
