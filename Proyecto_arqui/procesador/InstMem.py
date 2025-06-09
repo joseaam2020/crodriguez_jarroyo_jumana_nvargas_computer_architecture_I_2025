@@ -1,31 +1,31 @@
+import os
+
 class InstMem:
     def __init__(self):
         self.memory = []
 
-    def load_instructions(self, instructions):
-        self.memory = instructions
+    def load_instructions(self, filename):
+        full_path = os.path.join(os.path.dirname(__file__), filename)
+        with open(full_path, 'r') as f:
+            self.memory = [line.strip() for line in f if line.strip()]
 
     def fetch(self, address):
-        index = address // 4  
+        index = address // 4  # Cada instrucción ocupa 4 bytes
         if index < 0 or index >= len(self.memory):
-            raise IndexError("No existen mas instrucciones")
+            raise IndexError("No existen más instrucciones")
         return self.memory[index]
-
-# Crear instancia
+"""
+# Uso
 imem = InstMem()
+imem.load_instructions("salida.txt")
 
-
-instrucciones = [
-    "1111111111111111111111111",    
-    "0000000001111111111111100", 
-    "0000000111111111111111100",          
-    "1111111000000000000000000"   
-]
-imem.load_instructions(instrucciones)
-
+# Prueba de lectura secuencial
 pc = 0
-inst = imem.fetch(pc)
-#print(f"Instrucción en dirección {pc}: {inst}")
-pc = 12
-inst = imem.fetch(pc)
-#print(f"Instrucción en dirección {pc}: {inst}")
+try:
+    while True:
+        inst = imem.fetch(pc)
+        print(f"Instrucción en dirección {pc}: {inst}")
+        pc += 4
+except IndexError:
+    print("Fin de instrucciones.")"""
+

@@ -7,15 +7,6 @@ class ScoreboardParser:
     def __init__(self, bin_file,sb=None):
         self.asm = bin_file
         self.sb = sb if sb is not None else Scoreboard()
-        self.__init_default_units()
-
-    # Inicializa 2 unidades por tipo
-    def __init_default_units(self):
-        for _ in range(2):
-            #self.sb.units.append(FunctionalUnit('memory', clocks=1))
-            #self.sb.units.append(FunctionalUnit('alu', clocks=1))
-            #self.sb.units.append(FunctionalUnit('branch', clocks=1))
-            return 0
 
     # Traduce binario a instrucción
     def __parse_inst(self, bin_instr):
@@ -28,14 +19,12 @@ class ScoreboardParser:
 
     # Lee el archivo binario y lo parsea
     @staticmethod
-    def scoreboard_for_asm(bin_file,sb=None):
-        full_path = os.path.join(os.path.dirname(__file__), bin_file)
-        parser =  ScoreboardParser(full_path,sb) if sb is not None else ScoreboardParser(full_path)
-        with open(parser.asm, 'r') as f:
-            instrucciones_binarias = [line.strip() for line in f if line.strip()]
-        for instr_bin in instrucciones_binarias:
+    def parse_from_memory(instr_list, sb=None):
+        parser = ScoreboardParser(None, sb) if sb else ScoreboardParser(None)
+        for instr_bin in instr_list:
             parser.__parse_inst(instr_bin)
         return parser.sb
+
     
 
 
@@ -178,7 +167,7 @@ class Scoreboard:
     sb.tick()"""
 
 
-scoreboard = ScoreboardParser.scoreboard_for_asm("salida.txt")
+#scoreboard = ScoreboardParser.scoreboard_for_asm("salida.txt")
 
 """
 print(scoreboard.instructions)

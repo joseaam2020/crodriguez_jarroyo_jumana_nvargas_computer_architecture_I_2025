@@ -17,12 +17,14 @@ class Pipeline_marcador (Scoreboard):
             cls._instance = super().__new__(cls)
         return cls._instance
     
-    def __init__(self):
+    def __init__(self, inst, data=None):
         super().__init__()
         #Estado Arquitectonico
         self.registros = RegisterFile()
         self.safe = Safe()
         self.memory = CentralMemory()
+        self.memory.load_instructions(inst)
+        self.scoreboard = ScoreboardParser.parse_from_memory(self.memory.inst_mem.memory, self)
 
         #Unidades funcionales
         self.alu1 = ALU()
@@ -93,14 +95,14 @@ class Pipeline_marcador (Scoreboard):
         del self.reg_status[fu.fi]
         fu.clear()
     
-sb = Pipeline_marcador()
-scoreboard = ScoreboardParser.scoreboard_for_asm("salida.txt",sb)
+sb = Pipeline_marcador("salida.txt")
 
+"""
 print(scoreboard.instructions)
 print(scoreboard.instructions[0].op)
 print(scoreboard.instructions[1].op)
 print(scoreboard.instructions[2].op)
-print(scoreboard.instructions[3].op)
+print(scoreboard.instructions[3].op)"""
 
 while not sb.done():
     sb.tick()

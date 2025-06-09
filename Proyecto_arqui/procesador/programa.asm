@@ -1,7 +1,7 @@
-ADD  R1, R0, 4
+ADD  R2, R0, 4
 STOR R1, R0, R0 
 LOAD R1, R2, R3
-ADD  R4, R1, 3
+ADD  R4, R2, 3
 SAXS R1, R2, R3
 SUB  R4, R5, R6
 

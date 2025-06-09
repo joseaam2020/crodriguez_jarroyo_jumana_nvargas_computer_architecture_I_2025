@@ -2,7 +2,7 @@ from DM import DM as DataMemory
 from InstMem import InstMem as InstructionMemory  
 
 class CentralMemory:
-    def __init__(self, data_size=1024):
+    def __init__(self, data_size=4096):
         self.data_mem = DataMemory(size=data_size)
         self.inst_mem = InstructionMemory()
 

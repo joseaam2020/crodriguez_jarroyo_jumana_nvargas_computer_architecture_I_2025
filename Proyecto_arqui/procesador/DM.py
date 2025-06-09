@@ -1,6 +1,7 @@
+import os
 #Clase del DataMemory
 class DM:
-    def __init__(self, size=1024):
+    def __init__(self, size=4096):
         self.memory = [0] * size
         self.size = size
         self.keys = {}
@@ -24,4 +25,27 @@ class DM:
         if not dlt_op:
             return register_value
         return (register_value + DELTA) & 0xFFFFFFFF
+    
+    def load_file(self, filename: str, start_address: int = 0):
+        full_path = os.path.join(os.path.dirname(__file__), filename)
+        with open(full_path, "rb") as f:
+            data = f.read()
+            for i in range(0, len(data), 4):
+                # Tomamos bloques de 4 bytes
+                word_bytes = data[i:i+4]
+                # Rellenamos con ceros si el bloque es menor a 4 bytes (padding)
+                word = int.from_bytes(word_bytes.ljust(4, b'\x00'), byteorder="little")
+                # Escribimos la palabra en memoria
+                dm.write(start_address + (i // 4), word, mem_write=True)
+
+if __name__ == "__main__":
+    dm = DM(size=4096)  # Instancia de tu clase de memoria
+    dm.load_file("jorge_luis.txt", start_address=0)
+
+    for i in range(0, 3250, 250):
+        word = dm.read(i, mem_read=True)
+        print(f"Mem[{i}]: {hex(word)}")
+    xx = 2862
+    word = dm.read(xx, mem_read=True)
+    print(f"Mem[{xx}]: {hex(word)}")
 
