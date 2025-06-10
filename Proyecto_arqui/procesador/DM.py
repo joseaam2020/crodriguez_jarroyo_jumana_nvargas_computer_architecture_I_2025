@@ -38,6 +38,44 @@ class DM:
                 # Escribimos la palabra en memoria
                 self.write(start_address + (i // 4), word, mem_write=True)
 
+    def load_key(self, filename: str, start_address: int = 0):
+        full_path = os.path.join(os.path.dirname(__file__), filename)
+        with open(full_path, "r") as f:
+            hex_key = f.read().strip().lower()
+
+            if len(hex_key) != 32:
+                raise ValueError("La llave debe tener exactamente 128 bits (32 caracteres hexadecimales)")
+
+            print(f"llave leída: {hex_key}")
+
+            for i in range(0, len(hex_key), 8):
+                word_hex = hex_key[i:i+8]
+                word = int(word_hex, 16)
+                self.write(start_address + (i // 8), word, mem_write=True)
+
+    def load_hex_lines(self, filename: str, start_address: int = 0):
+        full_path = os.path.join(os.path.dirname(__file__), filename)
+        with open(full_path, "r") as f:
+            lines = f.readlines()
+
+            addr = start_address
+            for line in lines:
+                hex_str = line.strip().lower()
+                if not hex_str:
+                    continue  # Saltar líneas vacías
+
+                # Rellenar a la izquierda si tiene menos de 8 caracteres
+                hex_str = hex_str.zfill(8)
+
+                try:
+                    word = int(hex_str, 16)
+                except ValueError:
+                    raise ValueError(f"Línea inválida en el archivo: {line.strip()}")
+
+                print(f"Escribiendo 0x{hex_str.upper()} en dirección {addr}")
+                self.write(addr, word, mem_write=True)
+                addr += 1
+
 if __name__ == "__main__":
     dm = DM(size=4096)  # Instancia de tu clase de memoria
     dm.load_file("jorge_luis.txt", start_address=0)

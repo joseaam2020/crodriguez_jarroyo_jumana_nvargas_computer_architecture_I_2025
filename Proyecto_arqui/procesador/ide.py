@@ -138,6 +138,23 @@ class SimpleTextEditor(QMainWindow):
                 "Data File Loaded", 
                 f"Archivo de datos cargado:\n{os.path.basename(path)}"
             )
+    
+    def load_key_file(self):
+        """Permite al usuario seleccionar un archivo de datos para cargar en memoria"""
+        path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Open Data File", 
+            "", 
+            "All Files (*)"  # Cambiado para aceptar cualquier tipo de archivo
+        )
+        
+        if path:
+            self.key_file_path = path  # Guardamos la ruta para usarla luego
+            QMessageBox.information(
+                self, 
+                "Key File Loaded", 
+                f"Archivo de datos cargado:\n{os.path.basename(path)}"
+            )
 
     def _create_toolbar(self):
         # Crear una barra de herramientas en la parte superior derecha
@@ -154,6 +171,11 @@ class SimpleTextEditor(QMainWindow):
         load_data_action = QAction("Load Data", self)
         load_data_action.triggered.connect(self.load_data_file)
         self.toolbar.addAction(load_data_action)
+
+        # Botón Load Key
+        load_key_action = QAction("Load Key", self)
+        load_key_action.triggered.connect(self.load_key_file)
+        self.toolbar.addAction(load_key_action)
     
         # Botón Run
         run_action = QAction("Run", self)
@@ -382,8 +404,9 @@ class SimpleTextEditor(QMainWindow):
 
             # Usamos el archivo de datos si se ha seleccionado uno, sino None
             data_file = getattr(self, 'data_file_path', None)
+            key_file = getattr(self, 'key_file_path', None)
             
-            sb = Pipeline_marcador("salida.txt", data_file)
+            sb = Pipeline_marcador("salida.txt", data_file, key_file)
 
             # Ejecutamos todas las instrucciones
             while not sb.done():
@@ -425,7 +448,10 @@ class SimpleTextEditor(QMainWindow):
             
             try:
                 ensamblar(current_path, "Proyecto_arqui/procesador/salida.txt")
-                self.sb = Pipeline_marcador("salida.txt")
+                data_file = getattr(self, 'data_file_path', None)
+                key_file = getattr(self, 'key_file_path', None)
+
+                self.sb = Pipeline_marcador("salida.txt", data_file, key_file)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Ocurrió un error:\n{e}")
                 return
@@ -434,10 +460,12 @@ class SimpleTextEditor(QMainWindow):
         if not self.sb.done():
             self.sb.tick()
             
-            # Actualizar la interfaz
+            # Actualizamos la interfaz después de cada ciclo
             self.update_register_table(self.sb.registros.regs)
             self.update_safe_table(self.sb.safe.keys)
-            memory_values = [self.sb.memory.data_mem.read(i) for i in range(10)]
+                
+            # Actualizamos la memoria (primeras 10 posiciones)
+            memory_values = [int(self.sb.memory.data_mem.read(i, True)) for i in range(4096)]
             self.update_memory_table(memory_values)
             
             if self.sb.done():

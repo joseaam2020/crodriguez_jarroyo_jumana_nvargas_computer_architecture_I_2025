@@ -10,8 +10,8 @@ class MULT(FunctionalUnit):
     def execute(self, opcode: str, val1: int, val2: int, val3: int = 0):
         self.clocks -= 1
         try:
-            if opcode == "MULT":
-                return val1 * val2, ""
+            if opcode == "MUL":
+                return val1 * val2
             else:
                 return 0, f"Opcode no soportado: {opcode}"
         except Exception as e:

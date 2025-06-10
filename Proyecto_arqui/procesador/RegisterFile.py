@@ -11,7 +11,7 @@ class RegisterFile:
 
     def write(self): # escribir
         if self.w_enable and self.rd != 0:
-            self.regs[self.rd] = self.w_data
+            self.regs[self.rd] = self.w_data 
 
     def read(self): # leer
         # R0 siempre es 0
@@ -28,7 +28,7 @@ class RegisterFile:
     def dump(self):
         # para mostrar todos los registros
         for i in range(16):
-            print(f"R{i}: {self.regs[i]}")
+            print(f"R{i}: {self.regs[i] & 0xFFFFFFFF}")
 
 """rf = RegisterFile()
 

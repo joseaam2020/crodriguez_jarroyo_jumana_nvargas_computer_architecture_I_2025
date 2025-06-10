@@ -52,6 +52,7 @@ class FunctionalUnit:
     self.fi = inst.fi
     self.fj = inst.fj
     self.fk = inst.fk
+    self.opname = inst.opname
 
     if inst.fj in reg_status:
       self.qj = reg_status[inst.fj]

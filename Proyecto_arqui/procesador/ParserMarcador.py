@@ -82,7 +82,18 @@ class Scoreboard:
   def can_execute(self, fu):
     # check to make sure we've read operands, the functional unit
     # is actually in use, and has clocks remaining
-    return (not fu.rj and not fu.rk) and fu.issued()
+    if not ((not fu.rj and not fu.rk) and fu.issued()):
+        return False
+    
+    # Para la instrucción STK, verificar adicionalmente que R1-R4 estén disponibles
+    if fu.opname == "STK":
+        # Verificar que los registros R1-R4 no estén siendo escritos por otras unidades
+        for reg in ['0001', '0010', '0011', '0100']:  # Representación binaria de R1-R4
+            if reg in self.reg_status:
+                # Si alguno de los registros está siendo escrito por otra unidad, no podemos ejecutar
+                return False
+    
+    return True
 
 
   """ Determines if an instruction is able to enter the writeback phase"""
@@ -109,23 +120,6 @@ class Scoreboard:
   def read_operands(self, fu):
     fu.read_operands()
     self.instructions[fu.inst_pc].read_ops = self.clock
-
-
-  """ Execute stage of the scoreboard"""
-  def execute(self, fu):
-    fu.execute()
-    if fu.clocks == 0:
-      self.instructions[fu.inst_pc].ex_cmplt = self.clock
-
-
-  """ Writeback stage of the scoreboard"""
-  def write_back(self, fu):
-    fu.write_back(self.units)
-    self.instructions[fu.inst_pc].write_res = self.clock
-    # clear out the result register status
-    del self.reg_status[fu.fi]
-    fu.clear()
-
 
   """ Tick: simulates a clock cycle in the scoreboard"""
   def tick(self):
