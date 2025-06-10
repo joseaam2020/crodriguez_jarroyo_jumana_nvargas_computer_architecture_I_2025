@@ -1,13 +1,15 @@
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QTextEdit, QTabWidget, QFileDialog, QMessageBox,
     QMenuBar, QTableWidget, QTableWidgetItem, QSplitter, QWidget, QVBoxLayout,
-    QHeaderView, QLabel, QHBoxLayout, QPushButton, QToolBar
+    QHeaderView, QLabel, QHBoxLayout, QPushButton, QToolBar, QComboBox
 )
 from PySide6.QtCore import (Qt,QRegularExpression)
 from PySide6.QtGui import (QAction, QTextCharFormat, QFont, QSyntaxHighlighter, 
                           QColor, QTextDocument)
 import sys
 import os
+from Pipeline import Pipeline_marcador
+from traductor import ensamblar
 
 class SyntaxHighlighter(QSyntaxHighlighter):
     def __init__(self, parent=None):
@@ -71,6 +73,8 @@ class SimpleTextEditor(QMainWindow):
         self.setWindowTitle("Proyecto 2 Arquitectura de Computadores")
         self.setGeometry(100, 100, 1200, 700)
 
+        self.display_format = 'hex'
+
         self.open_tabs = {}
         self.untitled_count = 1
 
@@ -100,9 +104,56 @@ class SimpleTextEditor(QMainWindow):
         save_as_action.triggered.connect(self.save_file_as)
         file_menu.addAction(save_as_action)
 
+    def update_register_table(self, register_values):
+        """Actualiza la tabla de registros con los valores del pipeline"""
+        for i in range(16):
+            value_item = self.variable_table.item(i, 1)
+            value_item.setText(self.format_value(register_values[i]))
+
+    def update_safe_table(self, safe_values):
+        """Actualiza la tabla del safe con los valores del pipeline"""
+        for i in range(4):
+            value_item = self.register_table.item(i, 1)
+            value_item.setText(self.format_value(safe_values[i]))
+
+    def update_memory_table(self, memory_values):
+        """Actualiza la tabla de memoria con los valores del pipeline"""
+        for i, value in enumerate(memory_values):
+            val_item = self.memory_table.item(i, 1)
+            val_item.setText(self.format_value(value))
+
+    def load_data_file(self):
+        """Permite al usuario seleccionar un archivo de datos para cargar en memoria"""
+        path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Open Data File", 
+            "", 
+            "All Files (*)"  # Cambiado para aceptar cualquier tipo de archivo
+        )
+        
+        if path:
+            self.data_file_path = path  # Guardamos la ruta para usarla luego
+            QMessageBox.information(
+                self, 
+                "Data File Loaded", 
+                f"Archivo de datos cargado:\n{os.path.basename(path)}"
+            )
+
     def _create_toolbar(self):
         # Crear una barra de herramientas en la parte superior derecha
         self.toolbar = QToolBar("Control Buttons")
+
+        # Selector de formato de visualización
+        self.format_combo = QComboBox()
+        self.format_combo.addItems(["Hexadecimal", "Decimal", "Binario"])
+        self.format_combo.setCurrentText("Hexadecimal")
+        self.format_combo.currentTextChanged.connect(self.change_display_format)
+        self.toolbar.addWidget(self.format_combo)
+
+        # Botón Load Data
+        load_data_action = QAction("Load Data", self)
+        load_data_action.triggered.connect(self.load_data_file)
+        self.toolbar.addAction(load_data_action)
     
         # Botón Run
         run_action = QAction("Run", self)
@@ -173,12 +224,16 @@ class SimpleTextEditor(QMainWindow):
         right_panel.setLayout(right_layout)
 
         memory_label = QLabel("Memory")
-        self.memory_table = QTableWidget(10, 2)
+        self.memory_table = QTableWidget(4096, 2)  # Mostrar todas las 4096 posiciones
         self.memory_table.setHorizontalHeaderLabels(["Address", "Value"])
         self.memory_table.horizontalHeader().setStretchLastSection(True)
         self.memory_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        for i in range(10):
-            addr_item = QTableWidgetItem(f"{i:02X}")
+        
+        # Configurar scroll para mejorar rendimiento con tantas filas
+        self.memory_table.setVerticalScrollMode(QTableWidget.ScrollPerPixel)
+        
+        for i in range(4096):
+            addr_item = QTableWidgetItem(f"{i:04X}")  # Mostrar dirección en hexadecimal
             addr_item.setFlags(Qt.ItemIsEnabled)
             val_item = QTableWidgetItem("0")
             self.memory_table.setItem(i, 0, addr_item)
@@ -199,6 +254,34 @@ class SimpleTextEditor(QMainWindow):
         layout = QVBoxLayout()
         layout.addWidget(main_splitter)
         main_widget.setLayout(layout)
+    
+    def change_display_format(self, format_text):
+        """Cambia el formato de visualización de los valores"""
+        format_map = {
+            "Hexadecimal": "hex",
+            "Decimal": "dec",
+            "Binario": "bin"
+        }
+        self.display_format = format_map.get(format_text, "hex")
+        # Actualizamos las tablas para reflejar el nuevo formato
+        if hasattr(self, 'sb'):
+            self.update_register_table(self.sb.registros.regs)
+            self.update_safe_table(self.sb.safe.keys)
+            memory_values = [self.sb.memory.data_mem.read(i) for i in range(4096)]
+            self.update_memory_table(memory_values)
+
+    def format_value(self, value):
+        """Formatea un valor según el formato seleccionado"""
+        try:
+            int_value = int(value)  # Asegurarnos de que es un número entero
+            if self.display_format == 'hex':
+                return f"0x{int_value:08X}"
+            elif self.display_format == 'bin':
+                return f"0b{int_value:032b}"
+            else:  # decimal
+                return str(int_value)
+        except (ValueError, TypeError):
+            return str(value)  # Si no se puede convertir, devolver el valor original
 
     def new_tab(self):
         editor = QTextEdit()
@@ -264,19 +347,112 @@ class SimpleTextEditor(QMainWindow):
                 QMessageBox.warning(self, "Error", f"Could not save file:\n{e}")
 
     def run_code(self):
-        # Implementar la lógica para ejecutar el código
-        print("Ejecutando código...")
-        QMessageBox.information(self, "Run", "Ejecutando el código completo")
+        editor = self.editor_tabs.currentWidget()
+        if editor is None:
+            QMessageBox.warning(self, "Error", "No hay ningún editor abierto.")
+            return
+        
+        # Verificar si el archivo está guardado
+        current_path = None
+        for path, ed in self.open_tabs.items():
+            if ed == editor:
+                current_path = path
+                break
+        
+        if current_path is None:
+            reply = QMessageBox.question(self, 'Archivo no guardado',
+                                    "El archivo no está guardado. ¿Desea guardarlo ahora?",
+                                    QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+            
+            if reply == QMessageBox.Yes:
+                self.save_file_as()
+                for path, ed in self.open_tabs.items():
+                    if ed == editor:
+                        current_path = path
+                        break
+                if current_path is None:
+                    QMessageBox.warning(self, "Error", "Debe guardar el archivo primero.")
+                    return
+            else:
+                QMessageBox.warning(self, "Error", "Debe guardar el archivo primero.")
+                return
+        
+        try:
+            ensamblar(current_path, "Proyecto_arqui/procesador/salida.txt")
+
+            # Usamos el archivo de datos si se ha seleccionado uno, sino None
+            data_file = getattr(self, 'data_file_path', None)
+            
+            sb = Pipeline_marcador("salida.txt", data_file)
+
+            # Ejecutamos todas las instrucciones
+            while not sb.done():
+                sb.tick()
+                
+                # Actualizamos la interfaz después de cada ciclo
+                self.update_register_table(sb.registros.regs)
+                self.update_safe_table(sb.safe.keys)
+                
+                # Actualizamos la memoria (primeras 10 posiciones)
+                memory_values = [int(sb.memory.data_mem.read(i, True)) for i in range(4096)]
+                self.update_memory_table(memory_values)
+                
+                # Forzamos la actualización de la interfaz
+                QApplication.processEvents()
+
+            QMessageBox.information(self, "Éxito", "Ejecución completada")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Ocurrió un error:\n{e}")
 
     def step_code(self):
-        # Implementar la lógica para ejecutar paso a paso
-        print("Ejecutando paso a paso...")
-        QMessageBox.information(self, "Step", "Ejecutando instrucción paso a paso")
+        if not hasattr(self, 'sb') or self.sb.done():
+            # Si no hay simulación o ya terminó, comenzar una nueva
+            editor = self.editor_tabs.currentWidget()
+            if editor is None:
+                QMessageBox.warning(self, "Error", "No hay ningún editor abierto.")
+                return
+            
+            current_path = None
+            for path, ed in self.open_tabs.items():
+                if ed == editor:
+                    current_path = path
+                    break
+            
+            if current_path is None:
+                QMessageBox.warning(self, "Error", "Debe guardar el archivo primero.")
+                return
+            
+            try:
+                ensamblar(current_path, "Proyecto_arqui/procesador/salida.txt")
+                self.sb = Pipeline_marcador("salida.txt")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Ocurrió un error:\n{e}")
+                return
+        
+        # Ejecutar un solo paso
+        if not self.sb.done():
+            self.sb.tick()
+            
+            # Actualizar la interfaz
+            self.update_register_table(self.sb.registros.regs)
+            self.update_safe_table(self.sb.safe.keys)
+            memory_values = [self.sb.memory.data_mem.read(i) for i in range(10)]
+            self.update_memory_table(memory_values)
+            
+            if self.sb.done():
+                QMessageBox.information(self, "Fin", "Ejecución completada")
 
     def reset_simulation(self):
-        # Implementar la lógica para reiniciar la simulación
-        print("Reiniciando simulación...")
-        QMessageBox.information(self, "Reset", "Reiniciando la simulación")
+        if hasattr(self, 'sb'):
+            del self.sb
+        
+        # Resetear las tablas a cero
+        self.update_register_table([0]*16)
+        self.update_safe_table([0]*4)
+        self.update_memory_table([0]*10)
+        
+        QMessageBox.information(self, "Reset", "Simulación reiniciada")
 
 
 if __name__ == "__main__":

@@ -60,8 +60,10 @@ opcodes = {
 def tipo_instruccion(nombre):
     if nombre == 'LOOP':
         return 'branch'
-    elif nombre in ['LOAD', 'STOR', 'STK', 'DLT']:
+    elif nombre in ['LOAD', 'STOR']:
         return 'memoria'
+    elif nombre in ['STK', 'DLT']:
+        return 'especial'
     else:
         return 'aritmetica'
 
@@ -77,9 +79,8 @@ def traducir_instruccion(instr, etiquetas, pc):
         reg_cond = reg_a_bin(partes[1])
         destino = partes[2]
 
-        # Convertir etiqueta o valor inmediato a 13 bits
         if destino in etiquetas:
-            offset = etiquetas[destino]  # Dirección absoluta de la etiqueta
+            offset = etiquetas[destino]
         elif destino.isdigit():
             offset = int(destino)
         else:
@@ -100,6 +101,11 @@ def traducir_instruccion(instr, etiquetas, pc):
         reg_dir_bin = reg_a_bin(partes[2])
         reg_offset_bin = reg_a_bin(partes[3])
         return opcode + reg_dest_bin + reg_dir_bin + reg_offset_bin + '00000'
+
+    elif tipo == 'especial':
+        reg = partes[1]
+        reg_bin = reg_a_bin(reg)
+        return opcode + reg_bin + '0000000000000'
 
     elif tipo == 'aritmetica':
         reg_dest = partes[1]

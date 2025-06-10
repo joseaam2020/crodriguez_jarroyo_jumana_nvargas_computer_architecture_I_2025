@@ -24,14 +24,15 @@ class Pipeline_marcador (Scoreboard):
         self.safe = Safe()
         self.memory = CentralMemory()
         self.memory.load_instructions(inst)
-        self.memory.data_mem.load_file("jorge_luis.txt", start_address=0)
+        if data:
+            self.memory.data_mem.load_file(data, start_address=0)
         self.scoreboard = ScoreboardParser.parse_from_memory(self.memory.inst_mem.memory, self)
 
         #Unidades funcionales
         self.alu1 = ALU()
         self.alu2 = ALU()
-        self.memu1 = MemUnit(self.safe,self.memory,self.registros.regs[1:5]) #Esto puede tirar error, acordarse XD
-        self.memu2 = MemUnit(self.safe,self.memory,self.registros.regs[1:5])
+        self.memu1 = MemUnit(self.safe,self.memory,self.registros) 
+        self.memu2 = MemUnit(self.safe,self.memory,self.registros)
         self.saxs = SAXS(self.safe)
         self.mult = MultUnit()
         self.div = DivUnit()
@@ -122,14 +123,14 @@ class Pipeline_marcador (Scoreboard):
         del self.reg_status[fu.fi]
         fu.clear()
     
-sb = Pipeline_marcador("salida.txt")
 
-"""
+"""sb = Pipeline_marcador("salida.txt")
+
 print(scoreboard.instructions)
 print(scoreboard.instructions[0].op)
 print(scoreboard.instructions[1].op)
 print(scoreboard.instructions[2].op)
-print(scoreboard.instructions[3].op)"""
+print(scoreboard.instructions[3].op)
 
 while not sb.done():
     sb.tick()
@@ -139,5 +140,6 @@ for instruction in sb.instructions:
 
 print(sb.registros.dump())
 print(sb.memory.read_data(0, True))
-print(sb.pc)
+print(sb.pc)"""
+
 

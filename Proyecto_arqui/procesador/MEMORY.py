@@ -3,7 +3,7 @@ from fu import FunctionalUnit
 
 class Memory(FunctionalUnit): 
 
-    def __init__(self,safe,memory,registros):  
+    def __init__(self,safe,memory, registros):  
         super().__init__("memory",3)
         self.zero_flag = False
         self.memory = memory
@@ -20,9 +20,9 @@ class Memory(FunctionalUnit):
                 addr = address + val
                 self.memory.write_data(addr, val2, True)
             elif opcode == "STK":
-                self.safe.store_key(address, self.regs[0], self.regs[1], self.regs[2], self.regs[3])
+                self.safe.store_key(val2, self.regs.regs[1], self.regs.regs[2], self.regs.regs[3], self.regs.regs[4])
             elif opcode == "DLT":
-                return self.memory.apply_delta(val, False)
+                return self.memory.apply_delta(val2, True)
             else:
                 return 0, f"Opcode no soportado: {opcode}"
         except Exception as e:
