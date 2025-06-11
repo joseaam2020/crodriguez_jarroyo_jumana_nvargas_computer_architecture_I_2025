@@ -20,7 +20,8 @@ class Memory(FunctionalUnit):
                 addr = address + val
                 self.memory.write_data(addr, val2, True)
             elif opcode == "STK":
-                self.safe.store_key(val2, self.regs.regs[1], self.regs.regs[2], self.regs.regs[3], self.regs.regs[4])
+                if self.clocks == 2:
+                    self.safe.store_key(val2, self.regs.regs[1], self.regs.regs[2], self.regs.regs[3], self.regs.regs[4])
             elif opcode == "DLT":
                 return self.memory.apply_delta(val2, True)
             else:

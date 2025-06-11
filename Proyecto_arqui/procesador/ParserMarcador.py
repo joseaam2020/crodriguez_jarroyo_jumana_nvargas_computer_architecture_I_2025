@@ -123,8 +123,6 @@ class Scoreboard:
 
   """ Tick: simulates a clock cycle in the scoreboard"""
   def tick(self):
-    if self.clock > 10000:  # Límite razonable
-        raise RuntimeError("Possible infinite loop detected")
     # unlock all functional units
     for fu in self.units:
       fu.lock = False

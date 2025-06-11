@@ -191,6 +191,11 @@ class SimpleTextEditor(QMainWindow):
         reset_action = QAction("Reset", self)
         reset_action.triggered.connect(self.reset_simulation)
         self.toolbar.addAction(reset_action)
+
+        # Botón Save Encrypted
+        save_enc_action = QAction("Save Encrypted", self)
+        save_enc_action.triggered.connect(self.save_encrypted_file)
+        self.toolbar.addAction(save_enc_action)
         
         # Alinear la barra de herramientas a la derecha
         self.toolbar.setStyleSheet("QToolBar { spacing: 5px; }")
@@ -367,6 +372,38 @@ class SimpleTextEditor(QMainWindow):
                     self.editor_tabs.setTabText(self.editor_tabs.indexOf(editor), os.path.basename(path))
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Could not save file:\n{e}")
+    
+    def save_encrypted_file(self):
+        if not hasattr(self, 'sb') or not hasattr(self, 'data_file_path'):
+            QMessageBox.warning(self, "Error", "No hay datos encriptados para guardar o no se cargó archivo original")
+            return
+        
+        try:
+            # Obtener el nombre del archivo original y añadir .enc
+            original_path = self.data_file_path
+            enc_path = os.path.splitext(original_path)[0] + ".enc"
+            
+            # Obtener el tamaño original del archivo
+            original_size = os.path.getsize(original_path)
+            
+            # Leer datos encriptados de la memoria
+            encrypted_data = bytearray()
+            for i in range(0, original_size, 4):
+                # Leer palabra de 4 bytes de la memoria
+                word = self.sb.memory.data_mem.read((i // 4) + 4, True)  # +4 para saltar el header
+                # Convertir a bytes (little-endian) y truncar si es el último bloque
+                word_bytes = word.to_bytes(4, byteorder='little')
+                remaining_bytes = original_size - i
+                encrypted_data.extend(word_bytes[:remaining_bytes])
+            
+            # Escribir el archivo .enc
+            with open(enc_path, 'wb') as f:
+                f.write(encrypted_data)
+            
+            QMessageBox.information(self, "Éxito", f"Archivo encriptado guardado como:\n{enc_path}")
+        
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo guardar el archivo encriptado:\n{e}")
 
     def run_code(self):
         editor = self.editor_tabs.currentWidget()
@@ -424,6 +461,16 @@ class SimpleTextEditor(QMainWindow):
                 QApplication.processEvents()
 
             QMessageBox.information(self, "Éxito", "Ejecución completada")
+
+            if hasattr(self, 'data_file_path'):
+                reply = QMessageBox.question(
+                    self, 
+                    'Guardar encriptado',
+                    "¿Desea guardar el archivo encriptado?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    self.save_encrypted_file()
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Ocurrió un error:\n{e}")
