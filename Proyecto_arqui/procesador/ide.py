@@ -373,14 +373,10 @@ class SimpleTextEditor(QMainWindow):
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Could not save file:\n{e}")
     
-    def save_encrypted_file(self):
-        if not hasattr(self, 'sb') or not hasattr(self, 'data_file_path'):
-            QMessageBox.warning(self, "Error", "No hay datos encriptados para guardar o no se cargó archivo original")
-            return
-        
+    def save_encrypted_file(self, sb, data_file):    
         try:
             # Obtener el nombre del archivo original y añadir .enc
-            original_path = self.data_file_path
+            original_path = data_file
             enc_path = os.path.splitext(original_path)[0] + ".enc"
             
             # Obtener el tamaño original del archivo
@@ -390,7 +386,7 @@ class SimpleTextEditor(QMainWindow):
             encrypted_data = bytearray()
             for i in range(0, original_size, 4):
                 # Leer palabra de 4 bytes de la memoria
-                word = self.sb.memory.data_mem.read((i // 4) + 4, True)  # +4 para saltar el header
+                word = sb.memory.data_mem.read((i // 4) + 4, True)  # +4 para saltar el header
                 # Convertir a bytes (little-endian) y truncar si es el último bloque
                 word_bytes = word.to_bytes(4, byteorder='little')
                 remaining_bytes = original_size - i
@@ -470,7 +466,7 @@ class SimpleTextEditor(QMainWindow):
                     QMessageBox.Yes | QMessageBox.No
                 )
                 if reply == QMessageBox.Yes:
-                    self.save_encrypted_file()
+                    self.save_encrypted_file(sb, data_file)
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Ocurrió un error:\n{e}")
