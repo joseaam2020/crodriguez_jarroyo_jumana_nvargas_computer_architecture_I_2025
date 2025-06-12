@@ -135,24 +135,24 @@ class Scoreboard:
         self.issue(next_instruction, fu)
         self.pc += 1
         fu.lock = True
-        print(f"[{self.clock}] Issued instruction to FU {fu.type}")
+        #print(f"[{self.clock}] Issued instruction to FU {fu.type}")
       elif self.can_read_operands(fu):
         self.read_operands(fu)
         fu.lock = True
-        print(f"[{self.clock}] Read operands in FU {fu.type}")
+        #print(f"[{self.clock}] Read operands in FU {fu.type}")
       elif self.can_execute(fu):
         self.execute(fu)
         fu.lock = True
-        print(f"[{self.clock}] Executing in FU {fu.type}")
+        #print(f"[{self.clock}] Executing in FU {fu.type}")
       elif fu.issued():
         # the functional unit is in use but can't do anything
         fu.lock = True
-        print(f"[{self.clock}] Stalled FU {fu.type}, waiting on dependencies")
+        #print(f"[{self.clock}] Stalled FU {fu.type}, waiting on dependencies")
 
     for fu in self.units:
       if not fu.lock and self.can_write_back(fu):
         self.write_back(fu)
-        print(f"[{self.clock}] Wrote Back instruction to FU {fu.type}")
+        #print(f"[{self.clock}] Wrote Back instruction to FU {fu.type}")
 
     self.clock += 1
 

@@ -17,5 +17,5 @@ class Safe:
 
 testSafe = Safe()
 testSafe.store_key(0,1,2,3,4)
-print(testSafe.load_key(1))
-print(testSafe.keys)
+#print(testSafe.load_key(1))
+#print(testSafe.keys)
