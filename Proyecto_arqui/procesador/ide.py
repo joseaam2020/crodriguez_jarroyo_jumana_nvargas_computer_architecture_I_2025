@@ -193,19 +193,11 @@ class SimpleTextEditor(QMainWindow):
         reset_action.triggered.connect(self.reset_simulation)
         self.toolbar.addAction(reset_action)
 
-<<<<<<< Updated upstream
-        # Botón Save Encrypted
-        save_enc_action = QAction("Save Encrypted", self)
-        save_enc_action.triggered.connect(self.save_encrypted_file)
-        self.toolbar.addAction(save_enc_action)
-        
-=======
         # Botón Toggle Interface
         self.toggle_interface_action = QAction("Desconectar", self)
         self.toggle_interface_action.triggered.connect(self.toggle_interface)
         self.toolbar.addAction(self.toggle_interface_action)
 
->>>>>>> Stashed changes
         # Alinear la barra de herramientas a la derecha
         self.toolbar.setStyleSheet("QToolBar { spacing: 5px; }")
         self.addToolBar(Qt.LeftToolBarArea, self.toolbar)  # Corregido aquí 
@@ -455,18 +447,6 @@ class SimpleTextEditor(QMainWindow):
             while not sb.done():
                 sb.tick()
                 
-<<<<<<< Updated upstream
-                # Actualizamos la interfaz después de cada ciclo
-                self.update_register_table(sb.registros.regs)
-                self.update_safe_table(sb.safe.keys)
-                
-                # Actualizamos la memoria (primeras 10 posiciones)
-                memory_values = [int(sb.memory.data_mem.read(i, True)) for i in range(4096)]
-                self.update_memory_table(memory_values)
-                
-                # Forzamos la actualización de la interfaz
-                QApplication.processEvents()
-=======
                 # Solo actualizamos la interfaz si está conectada
                 if self.interface_connected:
                     # Actualizamos la interfaz después de cada ciclo
@@ -479,7 +459,6 @@ class SimpleTextEditor(QMainWindow):
                     
                     # Forzamos la actualización de la interfaz
                     QApplication.processEvents()
->>>>>>> Stashed changes
 
             QMessageBox.information(self, "Éxito", "Ejecución completada")
 
@@ -528,15 +507,6 @@ class SimpleTextEditor(QMainWindow):
         if not self.sb.done():
             self.sb.tick()
             
-<<<<<<< Updated upstream
-            # Actualizamos la interfaz después de cada ciclo
-            self.update_register_table(self.sb.registros.regs)
-            self.update_safe_table(self.sb.safe.keys)
-                
-            # Actualizamos la memoria (primeras 10 posiciones)
-            memory_values = [int(self.sb.memory.data_mem.read(i, True)) for i in range(4096)]
-            self.update_memory_table(memory_values)
-=======
             # Solo actualizamos la interfaz si está conectada
             if self.interface_connected:
                 self.update_register_table(self.sb.registros.regs)
@@ -546,7 +516,6 @@ class SimpleTextEditor(QMainWindow):
                 memory_values = [int(self.sb.memory.data_mem.read(i, True)) for i in range(15360)]
                 self.update_memory_table(memory_values)
         
->>>>>>> Stashed changes
             
             if self.sb.done():
                 QMessageBox.information(self, "Fin", "Ejecución completada")
