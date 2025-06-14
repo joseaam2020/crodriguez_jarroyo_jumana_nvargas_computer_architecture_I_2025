@@ -75,6 +75,7 @@ class SimpleTextEditor(QMainWindow):
         self.setGeometry(100, 100, 1200, 700)
 
         self.display_format = 'hex'
+        self.interface_connected = True  # Estado inicial: conectado
 
         self.open_tabs = {}
         self.untitled_count = 1
@@ -530,6 +531,17 @@ class SimpleTextEditor(QMainWindow):
         self.update_memory_table([0]*10)
         
         QMessageBox.information(self, "Reset", "Simulación reiniciada")
+
+    def toggle_interface(self):
+        """Alterna entre conectar y desconectar la interfaz"""
+        self.interface_connected = not self.interface_connected
+        
+        if self.interface_connected:
+            self.toggle_interface_action.setText("Desconectar")
+            QMessageBox.information(self, "Interfaz", "Interfaz conectada")
+        else:
+            self.toggle_interface_action.setText("Conectar")
+            QMessageBox.information(self, "Interfaz", "Interfaz desconectada")
 
 
 if __name__ == "__main__":

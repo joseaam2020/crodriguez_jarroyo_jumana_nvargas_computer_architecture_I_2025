@@ -157,7 +157,7 @@ class Pipeline_marcador (Scoreboard):
         fu.clear()
     
 # Obtener el directorio del script actual
-script_dir = os.path.dirname(os.path.abspath(__file__))
+"""script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Definir rutas a los archivos
 dataFile = os.path.join(script_dir, "encrypted_image.png")
@@ -171,7 +171,7 @@ while not sb.done():
 
 save_encrypted_file(sb, dataFile)
 #for instruction in sb.instructions:
-#    print(str(instruction))
+#    print(str(instruction))"""
 
 #print(sb.registros.dump())
 #print(sb.memory.read_data(0, True))
