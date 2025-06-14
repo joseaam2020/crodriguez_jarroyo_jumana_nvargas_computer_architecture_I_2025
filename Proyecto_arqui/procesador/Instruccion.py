@@ -1,3 +1,8 @@
+# El codigo de Instruction esta basado en:
+# https://github.com/MJunaidAhmad/scoreboard-simulation
+# Autor: MJunaidAhmad
+# Repositorio con licencia pública. Se respetan los derechos del autor original.
+
 class Instruction:
     def __init__(self, repr, op, dst, src1, src2, opname=None,imm=None,is_imm=False):
         self.issue = self.read_ops = self.ex_cmplt = self.write_res = -1

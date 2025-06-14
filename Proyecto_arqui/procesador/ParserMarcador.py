@@ -1,3 +1,7 @@
+# Los codigos de ScoreboardParser y Scoreboard estan basados en:
+# https://github.com/MJunaidAhmad/scoreboard-simulation
+# Autor: MJunaidAhmad
+# Repositorio con licencia pública. Se respetan los derechos del autor original.
 import os
 from Instruccion import instructions as inst_funcs
 from fu import FunctionalUnit, FORMAT_HEADER

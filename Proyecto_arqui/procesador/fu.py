@@ -1,4 +1,9 @@
 # fu.py - this file describes the functional units in the scoreboard
+# Este documento fue tomado de:
+# https://github.com/MJunaidAhmad/scoreboard-simulation
+# Autor: MJunaidAhmad
+# Repositorio con licencia pública. Se respetan los derechos del autor original.
+
 
 FORMAT_HEADER = \
     "UNIT     Clocks  Busy    Fi   Fj    Fk   Qj         Qk         Rj    Rk\
