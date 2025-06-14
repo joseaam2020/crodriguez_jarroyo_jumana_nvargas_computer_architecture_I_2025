@@ -77,6 +77,7 @@ class SimpleTextEditor(QMainWindow):
 
         self.open_tabs = {}
         self.untitled_count = 1
+        self.interface_connected = True  # Estado inicial: conectado
 
         self._create_menu()
         self._create_toolbar()
@@ -191,6 +192,11 @@ class SimpleTextEditor(QMainWindow):
         reset_action = QAction("Reset", self)
         reset_action.triggered.connect(self.reset_simulation)
         self.toolbar.addAction(reset_action)
+
+        # Botón Toggle Interface
+        self.toggle_interface_action = QAction("Desconectar", self)
+        self.toggle_interface_action.triggered.connect(self.toggle_interface)
+        self.toolbar.addAction(self.toggle_interface_action)
 
         # Botón Save Encrypted
         save_enc_action = QAction("Save Encrypted", self)
@@ -445,16 +451,18 @@ class SimpleTextEditor(QMainWindow):
             while not sb.done():
                 sb.tick()
                 
-                # Actualizamos la interfaz después de cada ciclo
-                self.update_register_table(sb.registros.regs)
-                self.update_safe_table(sb.safe.keys)
-                
-                # Actualizamos la memoria (primeras 10 posiciones)
-                memory_values = [int(sb.memory.data_mem.read(i, True)) for i in range(4096)]
-                self.update_memory_table(memory_values)
-                
-                # Forzamos la actualización de la interfaz
-                QApplication.processEvents()
+                # Solo actualizamos la interfaz si está conectada
+                if self.interface_connected:
+                    # Actualizamos la interfaz después de cada ciclo
+                    self.update_register_table(sb.registros.regs)
+                    self.update_safe_table(sb.safe.keys)
+                    
+                    # Actualizamos la memoria (primeras 10 posiciones)
+                    memory_values = [int(sb.memory.data_mem.read(i, True)) for i in range(4096)]
+                    self.update_memory_table(memory_values)
+                    
+                    # Forzamos la actualización de la interfaz
+                    QApplication.processEvents()
 
             QMessageBox.information(self, "Éxito", "Ejecución completada")
 
@@ -503,13 +511,15 @@ class SimpleTextEditor(QMainWindow):
         if not self.sb.done():
             self.sb.tick()
             
-            # Actualizamos la interfaz después de cada ciclo
-            self.update_register_table(self.sb.registros.regs)
-            self.update_safe_table(self.sb.safe.keys)
-                
-            # Actualizamos la memoria (primeras 10 posiciones)
-            memory_values = [int(self.sb.memory.data_mem.read(i, True)) for i in range(4096)]
-            self.update_memory_table(memory_values)
+            # Solo actualizamos la interfaz si está conectada
+            if self.interface_connected:
+                self.update_register_table(self.sb.registros.regs)
+                self.update_safe_table(self.sb.safe.keys)
+                    
+                # Actualizamos la memoria (primeras 10 posiciones)
+                memory_values = [int(self.sb.memory.data_mem.read(i, True)) for i in range(4096)]
+                self.update_memory_table(memory_values)
+        
             
             if self.sb.done():
                 QMessageBox.information(self, "Fin", "Ejecución completada")
@@ -524,6 +534,17 @@ class SimpleTextEditor(QMainWindow):
         self.update_memory_table([0]*10)
         
         QMessageBox.information(self, "Reset", "Simulación reiniciada")
+
+    def toggle_interface(self):
+        """Alterna entre conectar y desconectar la interfaz"""
+        self.interface_connected = not self.interface_connected
+        
+        if self.interface_connected:
+            self.toggle_interface_action.setText("Desconectar")
+            QMessageBox.information(self, "Interfaz", "Interfaz conectada")
+        else:
+            self.toggle_interface_action.setText("Conectar")
+            QMessageBox.information(self, "Interfaz", "Interfaz desconectada")
 
 
 if __name__ == "__main__":

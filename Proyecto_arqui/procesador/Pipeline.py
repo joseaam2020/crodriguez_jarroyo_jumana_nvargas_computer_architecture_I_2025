@@ -160,16 +160,16 @@ class Pipeline_marcador (Scoreboard):
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Definir rutas a los archivos
-dataFile = os.path.join(script_dir, "encrypted_image.png")
-llave = os.path.join(script_dir, "key.txt")
+#dataFile = os.path.join(script_dir, "encrypted_image.png")
+#llave = os.path.join(script_dir, "key.txt")
 
-ensamblar("Proyecto_arqui/procesador/Desencriptar.txt", "Proyecto_arqui/procesador/salida.txt")
-sb = Pipeline_marcador("salida.txt", dataFile, llave)
+#ensamblar("Proyecto_arqui/procesador/Desencriptar.txt", "Proyecto_arqui/procesador/salida.txt")
+#sb = Pipeline_marcador("salida.txt", dataFile, llave)
 
-while not sb.done():
-    sb.tick()
+#while not sb.done():
+ #   sb.tick()
 
-save_encrypted_file(sb, dataFile)
+#save_encrypted_file(sb, dataFile)
 #for instruction in sb.instructions:
 #    print(str(instruction))
 
