@@ -517,8 +517,10 @@ class SimpleTextEditor(QMainWindow):
                 self.update_safe_table(self.sb.safe.keys)
                     
                 # Actualizamos la memoria (primeras 10 posiciones)
-                memory_values = [int(self.sb.memory.data_mem.read(i, True)) for i in range(4096)]
+                memory_values = [int(sb.memory.data_mem.read(i, True)) for i in range(4096)]
                 self.update_memory_table(memory_values)
+            # Siempre permitir que Qt procese eventos
+           # QApplication.processEvents()
         
             
             if self.sb.done():
