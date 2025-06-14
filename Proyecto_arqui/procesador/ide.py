@@ -8,6 +8,7 @@ from PySide6.QtGui import (QAction, QTextCharFormat, QFont, QSyntaxHighlighter,
                           QColor, QTextDocument)
 import sys
 import os
+from math import ceil
 from Pipeline import Pipeline_marcador
 from traductor import ensamblar
 
@@ -192,11 +193,19 @@ class SimpleTextEditor(QMainWindow):
         reset_action.triggered.connect(self.reset_simulation)
         self.toolbar.addAction(reset_action)
 
+<<<<<<< Updated upstream
         # Botón Save Encrypted
         save_enc_action = QAction("Save Encrypted", self)
         save_enc_action.triggered.connect(self.save_encrypted_file)
         self.toolbar.addAction(save_enc_action)
         
+=======
+        # Botón Toggle Interface
+        self.toggle_interface_action = QAction("Desconectar", self)
+        self.toggle_interface_action.triggered.connect(self.toggle_interface)
+        self.toolbar.addAction(self.toggle_interface_action)
+
+>>>>>>> Stashed changes
         # Alinear la barra de herramientas a la derecha
         self.toolbar.setStyleSheet("QToolBar { spacing: 5px; }")
         self.addToolBar(Qt.LeftToolBarArea, self.toolbar)  # Corregido aquí 
@@ -251,7 +260,7 @@ class SimpleTextEditor(QMainWindow):
         right_panel.setLayout(right_layout)
 
         memory_label = QLabel("Memory")
-        self.memory_table = QTableWidget(4096, 2)  # Mostrar todas las 4096 posiciones
+        self.memory_table = QTableWidget(15360, 2)  # Mostrar todas las 4096 posiciones
         self.memory_table.setHorizontalHeaderLabels(["Address", "Value"])
         self.memory_table.horizontalHeader().setStretchLastSection(True)
         self.memory_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
@@ -259,7 +268,7 @@ class SimpleTextEditor(QMainWindow):
         # Configurar scroll para mejorar rendimiento con tantas filas
         self.memory_table.setVerticalScrollMode(QTableWidget.ScrollPerPixel)
         
-        for i in range(4096):
+        for i in range(15360):
             addr_item = QTableWidgetItem(f"{i:04X}")  # Mostrar dirección en hexadecimal
             addr_item.setFlags(Qt.ItemIsEnabled)
             val_item = QTableWidgetItem("0")
@@ -294,7 +303,7 @@ class SimpleTextEditor(QMainWindow):
         if hasattr(self, 'sb'):
             self.update_register_table(self.sb.registros.regs)
             self.update_safe_table(self.sb.safe.keys)
-            memory_values = [self.sb.memory.data_mem.read(i) for i in range(4096)]
+            memory_values = [self.sb.memory.data_mem.read(i) for i in range(15360)]
             self.update_memory_table(memory_values)
 
     def format_value(self, value):
@@ -375,24 +384,25 @@ class SimpleTextEditor(QMainWindow):
     
     def save_encrypted_file(self, sb, data_file):    
         try:
-            # Obtener el nombre del archivo original y añadir .enc
             original_path = data_file
             enc_path = os.path.splitext(original_path)[0] + ".enc"
             
-            # Obtener el tamaño original del archivo
             original_size = os.path.getsize(original_path)
-            
-            # Leer datos encriptados de la memoria
+            total_bytes = ceil(original_size / 8) * 8  # padding a múltiplo de 8
+
             encrypted_data = bytearray()
-            for i in range(0, original_size, 4):
-                # Leer palabra de 4 bytes de la memoria
-                word = sb.memory.data_mem.read((i // 4) + 4, True)  # +4 para saltar el header
-                # Convertir a bytes (little-endian) y truncar si es el último bloque
-                word_bytes = word.to_bytes(4, byteorder='little')
-                remaining_bytes = original_size - i
-                encrypted_data.extend(word_bytes[:remaining_bytes])
-            
-            # Escribir el archivo .enc
+
+            for i in range(0, total_bytes, 8):
+                # Leer dos palabras de 32 bits (4 bytes cada una)
+                word1 = sb.memory.data_mem.read((i // 4) + 4, True)
+                word2 = sb.memory.data_mem.read((i // 4) + 5, True)
+
+                # Convertir a bytes en little-endian
+                word_bytes1 = word1.to_bytes(4, byteorder='little')
+                word_bytes2 = word2.to_bytes(4, byteorder='little')
+
+                encrypted_data.extend(word_bytes1 + word_bytes2)
+
             with open(enc_path, 'wb') as f:
                 f.write(encrypted_data)
             
@@ -445,6 +455,7 @@ class SimpleTextEditor(QMainWindow):
             while not sb.done():
                 sb.tick()
                 
+<<<<<<< Updated upstream
                 # Actualizamos la interfaz después de cada ciclo
                 self.update_register_table(sb.registros.regs)
                 self.update_safe_table(sb.safe.keys)
@@ -455,6 +466,20 @@ class SimpleTextEditor(QMainWindow):
                 
                 # Forzamos la actualización de la interfaz
                 QApplication.processEvents()
+=======
+                # Solo actualizamos la interfaz si está conectada
+                if self.interface_connected:
+                    # Actualizamos la interfaz después de cada ciclo
+                    self.update_register_table(sb.registros.regs)
+                    self.update_safe_table(sb.safe.keys)
+                    
+                    # Actualizamos la memoria (primeras 10 posiciones)
+                    memory_values = [int(sb.memory.data_mem.read(i, True)) for i in range(15360)]
+                    self.update_memory_table(memory_values)
+                    
+                    # Forzamos la actualización de la interfaz
+                    QApplication.processEvents()
+>>>>>>> Stashed changes
 
             QMessageBox.information(self, "Éxito", "Ejecución completada")
 
@@ -503,6 +528,7 @@ class SimpleTextEditor(QMainWindow):
         if not self.sb.done():
             self.sb.tick()
             
+<<<<<<< Updated upstream
             # Actualizamos la interfaz después de cada ciclo
             self.update_register_table(self.sb.registros.regs)
             self.update_safe_table(self.sb.safe.keys)
@@ -510,6 +536,17 @@ class SimpleTextEditor(QMainWindow):
             # Actualizamos la memoria (primeras 10 posiciones)
             memory_values = [int(self.sb.memory.data_mem.read(i, True)) for i in range(4096)]
             self.update_memory_table(memory_values)
+=======
+            # Solo actualizamos la interfaz si está conectada
+            if self.interface_connected:
+                self.update_register_table(self.sb.registros.regs)
+                self.update_safe_table(self.sb.safe.keys)
+                    
+                # Actualizamos la memoria (primeras 10 posiciones)
+                memory_values = [int(self.sb.memory.data_mem.read(i, True)) for i in range(15360)]
+                self.update_memory_table(memory_values)
+        
+>>>>>>> Stashed changes
             
             if self.sb.done():
                 QMessageBox.information(self, "Fin", "Ejecución completada")
